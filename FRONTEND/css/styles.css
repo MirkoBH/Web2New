@@ -1,0 +1,183 @@
+:root {
+  --bg-main: #060709;
+  --bg-soft: #11141a;
+  --surface-glass: rgba(20, 24, 32, 0.55);
+  --surface-strong: rgba(10, 10, 12, 0.82);
+  --text-main: #f5f7fb;
+  --text-soft: #a9b1bd;
+  --accent-red: #d1001c;
+  --accent-red-soft: #f13a54;
+  --border-glass: rgba(255, 255, 255, 0.15);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: "Poppins", "Segoe UI", sans-serif;
+  color: var(--text-main);
+  background:
+    radial-gradient(circle at 8% 15%, rgba(209, 0, 28, 0.18), transparent 34%),
+    radial-gradient(circle at 88% 78%, rgba(209, 0, 28, 0.14), transparent 32%),
+    linear-gradient(145deg, #040507 0%, #090b0f 45%, #09090c 100%);
+  min-height: 100vh;
+}
+
+.page-shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+main {
+  flex: 1;
+}
+
+.nav-glass {
+  background: rgba(8, 9, 12, 0.68);
+  backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--border-glass);
+}
+
+.footer-glass {
+  background: rgba(12, 14, 18, 0.8);
+  backdrop-filter: blur(14px);
+  border-top: 1px solid var(--border-glass);
+}
+
+.glass-panel {
+  background: var(--surface-glass);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--border-glass);
+  border-radius: 1rem;
+}
+
+.hero {
+  border: 1px solid var(--border-glass);
+  border-radius: 1.25rem;
+  overflow: hidden;
+  position: relative;
+  background: var(--surface-strong);
+}
+
+.hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(120deg, rgba(5, 5, 8, 0.88), rgba(209, 0, 28, 0.12));
+}
+
+.hero-content {
+  position: relative;
+  z-index: 1;
+}
+
+.hero-image {
+  width: 100%;
+  height: 420px;
+  object-fit: cover;
+  opacity: 0.8;
+}
+
+.section-title {
+  font-size: clamp(1.4rem, 1.7vw + 1rem, 2.4rem);
+  font-weight: 600;
+}
+
+.car-card {
+  background: rgba(12, 14, 18, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.09) !important;
+  transition: transform 200ms ease, box-shadow 200ms ease;
+}
+
+.car-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.38);
+}
+
+.car-cover {
+  height: 190px;
+  object-fit: cover;
+}
+
+.form-control,
+.form-select,
+.form-check-input,
+.form-range {
+  background-color: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  color: var(--text-main);
+}
+
+.form-control:focus,
+.form-select:focus {
+  border-color: var(--accent-red-soft);
+  box-shadow: 0 0 0 0.25rem rgba(209, 0, 28, 0.23);
+  background-color: rgba(255, 255, 255, 0.06);
+  color: var(--text-main);
+}
+
+.form-select option {
+  color: #111;
+}
+
+.btn-danger {
+  background: linear-gradient(115deg, #b60018, #df1837);
+  border: none;
+}
+
+.btn-danger:hover,
+.btn-danger:focus {
+  background: linear-gradient(115deg, #a60016, #c80f2e);
+}
+
+.badge-ai {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+}
+
+.filter-sticky {
+  position: sticky;
+  top: 88px;
+}
+
+.faq-item {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.auth-card {
+  max-width: 520px;
+}
+
+.table-dark {
+  --bs-table-bg: rgba(18, 22, 28, 0.88);
+}
+
+.fade-in {
+  animation: fadeIn 420ms ease forwards;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 991.98px) {
+  .hero-image {
+    height: 300px;
+  }
+
+  .filter-sticky {
+    position: static;
+    top: auto;
+  }
+}

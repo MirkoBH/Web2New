@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>AutoPulse | Compra y venta de autos usados</title>
+    <meta name="description" content="Plataforma inteligente para publicar, buscar y comparar autos usados con analisis IA." />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data: https:; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; script-src 'self' https://cdn.jsdelivr.net; font-src 'self' https://fonts.gstatic.com; connect-src 'self';" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous" />
+    <link rel="stylesheet" href="css/styles.css" />
+  </head>
+  <body>
+    <div class="page-shell">
+      <header id="app-navbar"></header>
+      <main class="container py-4 py-lg-5">
+        <section class="hero mb-5 fade-in">
+          <div class="row g-0 align-items-center hero-content">
+            <div class="col-lg-6 p-4 p-lg-5">
+              <span class="badge badge-ai mb-3">MVP Web II 2026 · Bootstrap + JS</span>
+              <h1 class="display-5 fw-semibold lh-sm mb-3">Publica tu auto y valida su estado con IA antes de vender.</h1>
+              <p class="text-secondary mb-4">Registro por rol, busqueda inteligente, comparador lateral y flujo de consultas comprador-vendedor en una sola plataforma.</p>
+              <div class="d-flex flex-wrap gap-2">
+                <a class="btn btn-danger" href="registro.html">Crear cuenta</a>
+                <a class="btn btn-outline-light" href="listado.html">Ver autos</a>
+              </div>
+            </div>
+            <div class="col-lg-6">
+              <img class="hero-image" src="https://images.unsplash.com/photo-1494976388531-d1058494cdd8?auto=format&fit=crop&w=1400&q=80" alt="Auto deportivo en portada" />
+            </div>
+          </div>
+        </section>
+
+        <section class="mb-5">
+          <div class="row g-3" id="beneficios-grid">
+            <div class="col-md-4">
+              <article class="glass-panel p-4 h-100">
+                <h3 class="h5">Analisis de estado IA</h3>
+                <p class="text-secondary mb-0">Clasifica cada publicacion: excelente, buen estado, regular o requiere reparacion.</p>
+              </article>
+            </div>
+            <div class="col-md-4">
+              <article class="glass-panel p-4 h-100">
+                <h3 class="h5">Deteccion de danios</h3>
+                <p class="text-secondary mb-0">Identifica rayones, golpes o inconsistencias visuales en todas las imagenes cargadas.</p>
+              </article>
+            </div>
+            <div class="col-md-4">
+              <article class="glass-panel p-4 h-100">
+                <h3 class="h5">Rango de precio sugerido</h3>
+                <p class="text-secondary mb-0">Presenta un rango estimado de mercado para dar contexto al comprador.</p>
+              </article>
+            </div>
+          </div>
+        </section>
+
+        <section class="mb-5">
+          <div class="d-flex justify-content-between align-items-end mb-3">
+            <h2 class="section-title mb-0">Autos destacados</h2>
+            <a href="listado.html" class="btn btn-outline-light btn-sm">Explorar listado</a>
+          </div>
+          <div class="row g-3" id="featured-cars"></div>
+        </section>
+
+        <section class="mb-5">
+          <h2 class="section-title mb-3">Preguntas frecuentes</h2>
+          <div class="accordion" id="faq-home">
+            <div class="accordion-item faq-item text-bg-dark mb-2 rounded">
+              <h2 class="accordion-header">
+                <button class="accordion-button collapsed bg-transparent text-light" type="button" data-bs-toggle="collapse" data-bs-target="#faq1">Se puede navegar sin registrarse?</button>
+              </h2>
+              <div id="faq1" class="accordion-collapse collapse" data-bs-parent="#faq-home">
+                <div class="accordion-body text-secondary">Si. Puedes explorar autos y ver detalles. Para preguntar o comprar debes iniciar sesion.</div>
+              </div>
+            </div>
+            <div class="accordion-item faq-item text-bg-dark mb-2 rounded">
+              <h2 class="accordion-header">
+                <button class="accordion-button collapsed bg-transparent text-light" type="button" data-bs-toggle="collapse" data-bs-target="#faq2">Como valida la IA una publicacion?</button>
+              </h2>
+              <div id="faq2" class="accordion-collapse collapse" data-bs-parent="#faq-home">
+                <div class="accordion-body text-secondary">Analiza las imagenes para validar que el objeto sea un auto, detectar danios visibles y estimar un rango de precio.</div>
+              </div>
+            </div>
+            <div class="accordion-item faq-item text-bg-dark rounded">
+              <h2 class="accordion-header">
+                <button class="accordion-button collapsed bg-transparent text-light" type="button" data-bs-toggle="collapse" data-bs-target="#faq3">Puedo cambiar mi rol despues?</button>
+              </h2>
+              <div id="faq3" class="accordion-collapse collapse" data-bs-parent="#faq-home">
+                <div class="accordion-body text-secondary">No. El rol se define al registrarse y se mantiene fijo.</div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+      <footer id="app-footer"></footer>
+    </div>
+
+    <div id="compare-drawer-mount"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+    <script src="runtime-config.js"></script>
+    <script type="module" src="js/pages/index.js"></script>
+  </body>
+</html>

@@ -1,0 +1,6 @@
+<svg width="180" height="40" viewBox="0 0 180 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect x="1" y="1" width="38" height="38" rx="11" fill="#D1001C" fill-opacity="0.22" stroke="#D1001C"/>
+  <path d="M10 24L18 13L24 20L30 13" stroke="#F8FAFF" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="50" y="18" fill="#F8FAFF" font-family="Poppins, sans-serif" font-size="13" font-weight="600">AutoPulse</text>
+  <text x="50" y="31" fill="#B3BBC9" font-family="Poppins, sans-serif" font-size="10">Used Cars Marketplace</text>
+</svg>

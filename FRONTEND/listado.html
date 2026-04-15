@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>AutoPulse | Listado de autos</title>
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data: https:; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; script-src 'self' https://cdn.jsdelivr.net; font-src 'self' https://fonts.gstatic.com; connect-src 'self';" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="css/styles.css" />
+  </head>
+  <body>
+    <div class="page-shell">
+      <header id="app-navbar"></header>
+      <main class="container py-4">
+        <div class="row g-4">
+          <aside class="col-lg-3">
+            <div class="glass-panel p-3 filter-sticky">
+              <h2 class="h5 mb-3">Filtros</h2>
+              <form id="filtros-form" class="d-grid gap-3">
+                <div>
+                  <label class="form-label" for="filtro-texto">Marca o modelo</label>
+                  <input id="filtro-texto" name="q" class="form-control" type="text" placeholder="Toyota, Corolla..." />
+                </div>
+                <div>
+                  <label class="form-label" for="filtro-precio">Precio maximo (USD)</label>
+                  <input id="filtro-precio" name="precioMax" class="form-range" type="range" min="3000" max="100000" step="500" />
+                  <div class="small text-secondary" id="precio-output"></div>
+                </div>
+                <div>
+                  <label class="form-label" for="filtro-combustible">Combustible</label>
+                  <select id="filtro-combustible" name="combustible" class="form-select">
+                    <option value="">Todos</option>
+                    <option>Nafta</option>
+                    <option>Diesel</option>
+                    <option>Hibrido</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="form-label" for="filtro-transmision">Transmision</label>
+                  <select id="filtro-transmision" name="transmision" class="form-select">
+                    <option value="">Todas</option>
+                    <option>Manual</option>
+                    <option>Automatico</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="form-label" for="filtro-orden">Ordenar por</label>
+                  <select id="filtro-orden" name="orden" class="form-select">
+                    <option value="reciente">Mas nuevo</option>
+                    <option value="precio_asc">Precio asc</option>
+                    <option value="precio_desc">Precio desc</option>
+                    <option value="km_asc">Menor km</option>
+                  </select>
+                </div>
+                <div class="d-flex gap-2">
+                  <button type="submit" class="btn btn-danger flex-grow-1">Aplicar</button>
+                  <button type="button" id="reset-filtros" class="btn btn-outline-light">Reset</button>
+                </div>
+              </form>
+            </div>
+          </aside>
+          <section class="col-lg-9">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <h1 class="h3 mb-0">Resultados</h1>
+              <button class="btn btn-outline-light btn-sm" data-bs-toggle="offcanvas" data-bs-target="#compareDrawer">Comparador</button>
+            </div>
+            <div class="row g-3" id="cars-grid"></div>
+            <nav class="mt-4" aria-label="Paginacion listado">
+              <ul class="pagination justify-content-center" id="pagination"></ul>
+            </nav>
+          </section>
+        </div>
+      </main>
+      <footer id="app-footer"></footer>
+    </div>
+
+    <div id="compare-drawer-mount"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="runtime-config.js"></script>
+    <script type="module" src="js/pages/listado.js"></script>
+  </body>
+</html>
