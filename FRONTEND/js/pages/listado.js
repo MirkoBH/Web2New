@@ -1,6 +1,7 @@
 import { initAppShell } from "../app-init.js";
 import { getFallbackCatalogsFromCars, loadCatalogs } from "../data/catalogs.js";
 import { getCars } from "../data/mock-data.js";
+import { setupSearchableSingleSelect } from "../utils/searchable-select.js";
 import { formatUsd, qs } from "../utils/dom.js";
 import { renderCards } from "../utils/cards.js";
 
@@ -10,12 +11,9 @@ const form = qs("#filtros-form");
 const grid = qs("#cars-grid");
 const pagination = qs("#pagination");
 const precioOutput = qs("#precio-output");
-const marcaInput = qs("#filtro-marca");
-const marcaList = qs("#filtro-marca-list");
-const modeloInput = qs("#filtro-modelo");
-const modeloList = qs("#filtro-modelo-list");
-const provinciaInput = qs("#filtro-provincia");
-const provinciaList = qs("#filtro-provincia-list");
+const marcaSelect = qs("#filtro-marca");
+const modeloSelect = qs("#filtro-modelo");
+const provinciaSelect = qs("#filtro-provincia");
 const perPage = 6;
 
 let currentPage = 1;
@@ -23,6 +21,9 @@ let catalogs = {
   brands: [],
   provinces: []
 };
+let marcaSearchable;
+let modeloSearchable;
+let provinciaSearchable;
 
 function normalizeText(value) {
   return String(value || "")
@@ -30,21 +31,6 @@ function normalizeText(value) {
     .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase()
     .trim();
-}
-
-function setDataListOptions(datalistEl, options) {
-  if (!datalistEl) return;
-
-  const normalizedOptions = [...new Set(options.map((option) => String(option || "").trim()).filter(Boolean))].sort((a, b) =>
-    a.localeCompare(b, "es")
-  );
-
-  datalistEl.innerHTML = "";
-  normalizedOptions.forEach((option) => {
-    const optionEl = document.createElement("option");
-    optionEl.value = option;
-    datalistEl.appendChild(optionEl);
-  });
 }
 
 function getModelsByBrand(brand) {
@@ -58,15 +44,16 @@ function getModelsByBrand(brand) {
 }
 
 function refreshModelDatalistByBrand() {
-  const models = getModelsByBrand(marcaInput.value);
-  setDataListOptions(modeloList, models);
+  const models = getModelsByBrand(marcaSelect.value);
 
-  if (modeloInput.value) {
-    const isStillValid = models.some((model) => normalizeText(model) === normalizeText(modeloInput.value));
+  if (modeloSelect.value) {
+    const isStillValid = models.some((model) => normalizeText(model) === normalizeText(modeloSelect.value));
     if (!isStillValid) {
-      modeloInput.value = "";
+      modeloSelect.value = "";
     }
   }
+
+  modeloSearchable?.render({ preserveValue: true });
 }
 
 function getFiltersFromUrl() {
@@ -102,18 +89,15 @@ function applyFilters(cars, filters) {
   }
 
   if (filters.marca) {
-    const marcaFilter = normalizeText(filters.marca);
-    data = data.filter((car) => normalizeText(car.marca).includes(marcaFilter));
+    data = data.filter((car) => normalizeText(car.marca) === normalizeText(filters.marca));
   }
 
   if (filters.modelo) {
-    const modeloFilter = normalizeText(filters.modelo);
-    data = data.filter((car) => normalizeText(car.modelo).includes(modeloFilter));
+    data = data.filter((car) => normalizeText(car.modelo) === normalizeText(filters.modelo));
   }
 
   if (filters.provincia) {
-    const provinciaFilter = normalizeText(filters.provincia);
-    data = data.filter((car) => normalizeText(car.ubicacion).includes(provinciaFilter));
+    data = data.filter((car) => normalizeText(car.ubicacion) === normalizeText(filters.provincia));
   }
 
   data = data.filter((car) => car.precio <= filters.precioMax);
@@ -149,9 +133,9 @@ function renderPagination(totalItems, page, filters) {
 
 function fillForm(filters) {
   form.q.value = filters.q;
-  marcaInput.value = filters.marca;
-  modeloInput.value = filters.modelo;
-  provinciaInput.value = filters.provincia;
+  marcaSelect.value = filters.marca;
+  modeloSelect.value = filters.modelo;
+  provinciaSelect.value = filters.provincia;
   form.precioMax.value = String(filters.precioMax);
   form.combustible.value = filters.combustible;
   form.transmision.value = filters.transmision;
@@ -181,15 +165,34 @@ async function initCatalogs() {
 
 async function init() {
   await initCatalogs();
-  setDataListOptions(
-    marcaList,
-    catalogs.brands.map((entry) => entry.marca)
-  );
-  setDataListOptions(provinciaList, catalogs.provinces);
-  setDataListOptions(modeloList, getModelsByBrand(""));
+
+  marcaSearchable = setupSearchableSingleSelect({
+    selectEl: marcaSelect,
+    defaultOptionLabel: "Todas",
+    getOptions: () => catalogs.brands.map((entry) => entry.marca),
+    onSelectionChange: () => {
+      modeloSelect.value = "";
+      refreshModelDatalistByBrand();
+    }
+  });
+
+  modeloSearchable = setupSearchableSingleSelect({
+    selectEl: modeloSelect,
+    defaultOptionLabel: "Todos",
+    getOptions: () => getModelsByBrand(marcaSelect.value)
+  });
+
+  provinciaSearchable = setupSearchableSingleSelect({
+    selectEl: provinciaSelect,
+    defaultOptionLabel: "Todas",
+    getOptions: () => catalogs.provinces
+  });
 
   const initial = getFiltersFromUrl();
   currentPage = initial.page;
+  marcaSearchable.render({ preserveValue: false });
+  modeloSearchable.render({ preserveValue: false });
+  provinciaSearchable.render({ preserveValue: false });
   fillForm(initial);
   refreshModelDatalistByBrand();
   render(initial);
@@ -197,16 +200,13 @@ async function init() {
 
 await init();
 
-marcaInput.addEventListener("input", refreshModelDatalistByBrand);
-marcaInput.addEventListener("change", refreshModelDatalistByBrand);
-
 form.addEventListener("submit", (event) => {
   event.preventDefault();
   const filters = {
     q: form.q.value.trim(),
-    marca: marcaInput.value.trim(),
-    modelo: modeloInput.value.trim(),
-    provincia: provinciaInput.value.trim(),
+    marca: marcaSelect.value,
+    modelo: modeloSelect.value,
+    provincia: provinciaSelect.value,
     precioMax: Number(form.precioMax.value),
     combustible: form.combustible.value,
     transmision: form.transmision.value,

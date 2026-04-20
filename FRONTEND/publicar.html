@@ -22,13 +22,15 @@
           <form id="car-form" class="row g-3" novalidate>
             <div class="col-md-4">
               <label class="form-label" for="publicar-marca">Marca</label>
-              <input class="form-control" id="publicar-marca" name="marca" list="publicar-marca-list" placeholder="Seleccionar o escribir marca" autocomplete="off" required />
-              <datalist id="publicar-marca-list"></datalist>
+              <select class="form-select" id="publicar-marca" name="marca" required>
+                <option value="">Seleccionar marca</option>
+              </select>
             </div>
             <div class="col-md-4">
               <label class="form-label" for="publicar-modelo">Modelo</label>
-              <input class="form-control" id="publicar-modelo" name="modelo" list="publicar-modelo-list" placeholder="Seleccionar o escribir modelo" autocomplete="off" required />
-              <datalist id="publicar-modelo-list"></datalist>
+              <select class="form-select" id="publicar-modelo" name="modelo" required>
+                <option value="">Seleccionar modelo</option>
+              </select>
             </div>
             <div class="col-md-4"><label class="form-label">Color</label><input class="form-control" name="color" required /></div>
             <div class="col-md-4"><label class="form-label">Año</label><input class="form-control" name="anio" type="number" min="1950" max="2026" required /></div>
@@ -38,8 +40,9 @@
             <div class="col-md-4"><label class="form-label">Combustible</label><select class="form-select" name="combustible" required><option value="">Seleccionar</option><option>Nafta</option><option>Diesel</option><option>Hibrido</option></select></div>
             <div class="col-md-4">
               <label class="form-label" for="publicar-ubicacion">Ubicacion (Argentina)</label>
-              <input class="form-control" id="publicar-ubicacion" name="ubicacion" list="publicar-ubicacion-list" placeholder="Seleccionar o escribir provincia" autocomplete="off" required />
-              <datalist id="publicar-ubicacion-list"></datalist>
+              <select class="form-select" id="publicar-ubicacion" name="ubicacion" required>
+                <option value="">Seleccionar provincia</option>
+              </select>
             </div>
             <div class="col-12"><label class="form-label">Descripcion</label><textarea class="form-control" name="descripcion" rows="3" minlength="20" required></textarea></div>
             <div class="col-12"><label class="form-label">Detalles de daños</label><textarea class="form-control" name="detallesDanios" rows="2" required></textarea></div>

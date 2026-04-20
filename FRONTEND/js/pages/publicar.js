@@ -2,6 +2,7 @@ import { initAppShell } from "../app-init.js";
 import { getFallbackCatalogsFromCars, loadCatalogs } from "../data/catalogs.js";
 import { getCars } from "../data/mock-data.js";
 import { requireAuth } from "../utils/auth.js";
+import { setupSearchableSingleSelect } from "../utils/searchable-select.js";
 import { formatUsd, qs } from "../utils/dom.js";
 import { getKey, writeJson, readJson } from "../utils/storage.js";
 
@@ -14,17 +15,17 @@ if (!session) {
   const form = qs("#car-form");
   const preview = qs("#preview-zone");
   const alertZone = qs("#alert-zone");
-  const marcaInput = qs("#publicar-marca");
-  const marcaList = qs("#publicar-marca-list");
-  const modeloInput = qs("#publicar-modelo");
-  const modeloList = qs("#publicar-modelo-list");
-  const ubicacionInput = qs("#publicar-ubicacion");
-  const ubicacionList = qs("#publicar-ubicacion-list");
+  const marcaSelect = qs("#publicar-marca");
+  const modeloSelect = qs("#publicar-modelo");
+  const ubicacionSelect = qs("#publicar-ubicacion");
 
   let catalogs = {
     brands: [],
     provinces: []
   };
+  let marcaSearchable;
+  let modeloSearchable;
+  let provinciaSearchable;
 
   function showAlert(message, type = "danger") {
     alertZone.innerHTML = `<div class="alert alert-${type}">${message}</div>`;
@@ -36,21 +37,6 @@ if (!session) {
       .replace(/[\u0300-\u036f]/g, "")
       .toLowerCase()
       .trim();
-  }
-
-  function setDataListOptions(datalistEl, options) {
-    if (!datalistEl) return;
-
-    const normalizedOptions = [...new Set(options.map((option) => String(option || "").trim()).filter(Boolean))].sort((a, b) =>
-      a.localeCompare(b, "es")
-    );
-
-    datalistEl.innerHTML = "";
-    normalizedOptions.forEach((option) => {
-      const optionEl = document.createElement("option");
-      optionEl.value = option;
-      datalistEl.appendChild(optionEl);
-    });
   }
 
   function getModelsForBrand(brand) {
@@ -68,13 +54,12 @@ if (!session) {
     return options.find((option) => normalizeText(option) === normalizedValue) || "";
   }
 
-  function refreshModeloListByBrand() {
-    const models = getModelsForBrand(marcaInput.value);
-    setDataListOptions(modeloList, models);
-
-    if (modeloInput.value && !findCanonicalValue(modeloInput.value, models)) {
-      modeloInput.value = "";
+  function refreshModeloOptionsByBrand() {
+    const models = getModelsForBrand(marcaSelect.value);
+    if (modeloSelect.value && !findCanonicalValue(modeloSelect.value, models)) {
+      modeloSelect.value = "";
     }
+    modeloSearchable?.render({ preserveValue: true });
   }
 
   async function initCatalogFilters() {
@@ -86,12 +71,31 @@ if (!session) {
       catalogs = getFallbackCatalogsFromCars(cars);
     }
 
-    setDataListOptions(
-      marcaList,
-      catalogs.brands.map((entry) => entry.marca)
-    );
-    setDataListOptions(ubicacionList, catalogs.provinces);
-    refreshModeloListByBrand();
+    marcaSearchable = setupSearchableSingleSelect({
+      selectEl: marcaSelect,
+      defaultOptionLabel: "Seleccionar marca",
+      getOptions: () => catalogs.brands.map((entry) => entry.marca),
+      onSelectionChange: () => {
+        modeloSelect.value = "";
+        refreshModeloOptionsByBrand();
+      }
+    });
+
+    modeloSearchable = setupSearchableSingleSelect({
+      selectEl: modeloSelect,
+      defaultOptionLabel: "Seleccionar modelo",
+      getOptions: () => getModelsForBrand(marcaSelect.value)
+    });
+
+    provinciaSearchable = setupSearchableSingleSelect({
+      selectEl: ubicacionSelect,
+      defaultOptionLabel: "Seleccionar provincia",
+      getOptions: () => catalogs.provinces
+    });
+
+    marcaSearchable.render({ preserveValue: false });
+    modeloSearchable.render({ preserveValue: false });
+    provinciaSearchable.render({ preserveValue: false });
   }
 
   function toBase64(file) {
@@ -122,9 +126,6 @@ if (!session) {
   }
 
   await initCatalogFilters();
-
-  marcaInput.addEventListener("input", refreshModeloListByBrand);
-  marcaInput.addEventListener("change", refreshModeloListByBrand);
 
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
@@ -221,6 +222,8 @@ if (!session) {
     showAlert(`Publicacion aprobada por IA (${ia.estado}, score ${ia.score}/10).`, "success");
     preview.innerHTML = `<p class="small text-secondary mb-0">Rango estimado: ${formatUsd(ia.rangoPrecioMin)} - ${formatUsd(ia.rangoPrecioMax)}</p>`;
     form.reset();
-    refreshModeloListByBrand();
+    marcaSearchable.render({ preserveValue: false });
+    modeloSearchable.render({ preserveValue: false });
+    provinciaSearchable.render({ preserveValue: false });
   });
 }
