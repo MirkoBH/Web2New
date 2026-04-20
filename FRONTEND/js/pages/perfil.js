@@ -28,10 +28,28 @@ if (!session) {
           <h2 class="h4 mb-0">Mis autos</h2>
           <a class="btn btn-danger btn-sm" href="publicar.html">Publicar nuevo</a>
         </div>
-        <div class="row g-3">${myCars.map((c) => `<div class="col-md-6">${carCardTemplate(c)}<div class="mt-2 d-flex gap-2"><a class="btn btn-outline-light btn-sm" href="editar.html?id=${c.id}">Editar</a><button class="btn btn-outline-danger btn-sm" data-delete-id="${c.id}">Eliminar</button></div></div>`).join("")}</div>
+        <div class="perfil-cars-grid">
+          ${
+            myCars.length === 0
+              ? '<p class="text-secondary mb-0">Aun no tienes publicaciones. Crea tu primer auto.</p>'
+              : myCars
+                  .map(
+                    (c) => `
+                      <article class="perfil-car-item">
+                        ${carCardTemplate(c)}
+                        <div class="perfil-actions">
+                          <a class="btn btn-outline-light btn-sm" href="editar.html?id=${c.id}">Editar</a>
+                          <button class="btn btn-outline-danger btn-sm" data-delete-id="${c.id}">Eliminar</button>
+                        </div>
+                      </article>
+                    `
+                  )
+                  .join("")
+          }
+        </div>
       </section>
 
-      <section class="glass-panel p-4">
+      <section class="glass-panel p-4 perfil-questions-section">
         <h2 class="h4 mb-3">Consultas pendientes</h2>
         <div id="seller-questions" class="d-grid gap-2"></div>
       </section>
@@ -52,7 +70,7 @@ if (!session) {
       qMount.innerHTML = questions
         .map(
           (q) => `
-            <article class="p-3 rounded" style="background: rgba(255,255,255,0.04)">
+            <article class="p-3 rounded perfil-question-item">
               <p class="mb-1"><strong>${q.userName}</strong> pregunto:</p>
               <p class="small">${q.question}</p>
               ${q.answer ? `<p class="small text-secondary mb-0">Respuesta enviada: ${q.answer}</p>` : `<form data-answer-id="${q.id}" class="d-grid gap-2"><textarea class="form-control" minlength="5" required></textarea><button class="btn btn-danger btn-sm" type="submit">Responder</button></form>`}
