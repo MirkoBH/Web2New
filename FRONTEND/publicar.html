@@ -22,12 +22,14 @@
           <form id="car-form" class="row g-3" novalidate>
             <div class="col-md-4">
               <label class="form-label" for="publicar-marca">Marca</label>
+              <input class="form-control mb-2" id="publicar-marca-search" type="text" placeholder="Buscar marca..." autocomplete="off" />
               <select class="form-select" id="publicar-marca" name="marca" required>
                 <option value="">Seleccionar marca</option>
               </select>
             </div>
             <div class="col-md-4">
               <label class="form-label" for="publicar-modelo">Modelo</label>
+              <input class="form-control mb-2" id="publicar-modelo-search" type="text" placeholder="Buscar modelo..." autocomplete="off" />
               <select class="form-select" id="publicar-modelo" name="modelo" required>
                 <option value="">Seleccionar modelo</option>
               </select>
@@ -40,6 +42,7 @@
             <div class="col-md-4"><label class="form-label">Combustible</label><select class="form-select" name="combustible" required><option value="">Seleccionar</option><option>Nafta</option><option>Diesel</option><option>Hibrido</option></select></div>
             <div class="col-md-4">
               <label class="form-label" for="publicar-ubicacion">Ubicacion (Argentina)</label>
+              <input class="form-control mb-2" id="publicar-ubicacion-search" type="text" placeholder="Buscar provincia..." autocomplete="off" />
               <select class="form-select" id="publicar-ubicacion" name="ubicacion" required>
                 <option value="">Seleccionar provincia</option>
               </select>

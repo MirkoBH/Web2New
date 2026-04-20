@@ -11,14 +11,22 @@ const grid = qs("#cars-grid");
 const pagination = qs("#pagination");
 const precioOutput = qs("#precio-output");
 const marcaSelect = qs("#filtro-marca");
+const marcaSearchInput = qs("#filtro-marca-search");
 const modeloSelect = qs("#filtro-modelo");
+const modeloSearchInput = qs("#filtro-modelo-search");
 const provinciaSelect = qs("#filtro-provincia");
+const provinciaSearchInput = qs("#filtro-provincia-search");
 const perPage = 6;
 
 let currentPage = 1;
 let catalogs = {
   brands: [],
   provinces: []
+};
+const searchState = {
+  marca: "",
+  modelo: "",
+  provincia: ""
 };
 
 function normalizeText(value) {
@@ -38,11 +46,25 @@ function setSelectOptions(selectEl, options, defaultLabel, selectedValue = "") {
     .filter(Boolean)
     .sort((a, b) => a.localeCompare(b, "es"));
 
-  selectEl.innerHTML = `<option value="">${defaultLabel}</option>`;
+  selectEl.innerHTML = "";
+  const defaultOption = document.createElement("option");
+  defaultOption.value = "";
+  defaultOption.textContent = defaultLabel;
+  selectEl.appendChild(defaultOption);
+
   normalizedOptions.forEach((option) => {
-    const selected = normalizeText(option) === selectedNormalized ? " selected" : "";
-    selectEl.insertAdjacentHTML("beforeend", `<option value="${option}"${selected}>${option}</option>`);
+    const optionEl = document.createElement("option");
+    optionEl.value = option;
+    optionEl.textContent = option;
+    optionEl.selected = normalizeText(option) === selectedNormalized;
+    selectEl.appendChild(optionEl);
   });
+}
+
+function filterBySearch(options, term) {
+  const normalizedTerm = normalizeText(term);
+  if (!normalizedTerm) return options;
+  return options.filter((option) => normalizeText(option).includes(normalizedTerm));
 }
 
 function getModelsByBrand(brand) {
@@ -56,15 +78,23 @@ function getModelsByBrand(brand) {
 }
 
 function populateCatalogFilters(selected = {}) {
+  const filteredBrands = filterBySearch(
+    catalogs.brands.map((entry) => entry.marca),
+    searchState.marca
+  );
+
+  const filteredModels = filterBySearch(getModelsByBrand(selected.marca || ""), searchState.modelo);
+  const filteredProvinces = filterBySearch(catalogs.provinces, searchState.provincia);
+
   setSelectOptions(
     marcaSelect,
-    catalogs.brands.map((entry) => entry.marca),
+    filteredBrands,
     "Todas",
     selected.marca || ""
   );
 
-  setSelectOptions(modeloSelect, getModelsByBrand(selected.marca || ""), "Todos", selected.modelo || "");
-  setSelectOptions(provinciaSelect, catalogs.provinces, "Todas", selected.provincia || "");
+  setSelectOptions(modeloSelect, filteredModels, "Todos", selected.modelo || "");
+  setSelectOptions(provinciaSelect, filteredProvinces, "Todas", selected.provincia || "");
 }
 
 function getFiltersFromUrl() {
@@ -187,8 +217,40 @@ await init();
 
 marcaSelect.addEventListener("change", () => {
   const selectedMarca = marcaSelect.value;
+  searchState.modelo = "";
+  modeloSearchInput.value = "";
   const currentModel = modeloSelect.value;
   setSelectOptions(modeloSelect, getModelsByBrand(selectedMarca), "Todos", currentModel);
+});
+
+marcaSearchInput.addEventListener("input", () => {
+  searchState.marca = marcaSearchInput.value;
+  const selected = {
+    marca: marcaSelect.value,
+    modelo: modeloSelect.value,
+    provincia: provinciaSelect.value
+  };
+  populateCatalogFilters(selected);
+});
+
+modeloSearchInput.addEventListener("input", () => {
+  searchState.modelo = modeloSearchInput.value;
+  const selected = {
+    marca: marcaSelect.value,
+    modelo: modeloSelect.value,
+    provincia: provinciaSelect.value
+  };
+  populateCatalogFilters(selected);
+});
+
+provinciaSearchInput.addEventListener("input", () => {
+  searchState.provincia = provinciaSearchInput.value;
+  const selected = {
+    marca: marcaSelect.value,
+    modelo: modeloSelect.value,
+    provincia: provinciaSelect.value
+  };
+  populateCatalogFilters(selected);
 });
 
 form.addEventListener("submit", (event) => {
@@ -224,6 +286,12 @@ qs("#reset-filtros").addEventListener("click", () => {
     orden: "reciente",
     page: 1
   };
+  marcaSearchInput.value = "";
+  modeloSearchInput.value = "";
+  provinciaSearchInput.value = "";
+  searchState.marca = "";
+  searchState.modelo = "";
+  searchState.provincia = "";
   populateCatalogFilters(resetFilters);
   fillForm(resetFilters);
   pushFiltersToUrl(resetFilters);
