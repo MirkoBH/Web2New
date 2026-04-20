@@ -17,20 +17,35 @@
       <main class="container py-4">
         <section class="glass-panel p-4">
           <h1 class="h3 mb-3">Publicar auto</h1>
-          <p class="text-secondary">La IA valida que las imagenes sean de autos y analiza posibles danios antes de publicar.</p>
+          <p class="text-secondary">La IA valida que las imagenes sean de autos y analiza posibles daños antes de publicar.</p>
           <div id="alert-zone"></div>
           <form id="car-form" class="row g-3" novalidate>
-            <div class="col-md-4"><label class="form-label">Marca</label><input class="form-control" name="marca" required /></div>
-            <div class="col-md-4"><label class="form-label">Modelo</label><input class="form-control" name="modelo" required /></div>
+            <div class="col-md-4">
+              <label class="form-label" for="publicar-marca">Marca</label>
+              <select class="form-select" id="publicar-marca" name="marca" required>
+                <option value="">Seleccionar marca</option>
+              </select>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label" for="publicar-modelo">Modelo</label>
+              <select class="form-select" id="publicar-modelo" name="modelo" required>
+                <option value="">Seleccionar modelo</option>
+              </select>
+            </div>
             <div class="col-md-4"><label class="form-label">Color</label><input class="form-control" name="color" required /></div>
-            <div class="col-md-4"><label class="form-label">Anio</label><input class="form-control" name="anio" type="number" min="1950" max="2026" required /></div>
+            <div class="col-md-4"><label class="form-label">Año</label><input class="form-control" name="anio" type="number" min="1950" max="2026" required /></div>
             <div class="col-md-4"><label class="form-label">Kilometraje</label><input class="form-control" name="kilometraje" type="number" min="0" required /></div>
             <div class="col-md-4"><label class="form-label">Precio (USD)</label><input class="form-control" name="precio" type="number" min="1000" required /></div>
             <div class="col-md-4"><label class="form-label">Transmision</label><select class="form-select" name="transmision" required><option value="">Seleccionar</option><option>Manual</option><option>Automatico</option></select></div>
             <div class="col-md-4"><label class="form-label">Combustible</label><select class="form-select" name="combustible" required><option value="">Seleccionar</option><option>Nafta</option><option>Diesel</option><option>Hibrido</option></select></div>
-            <div class="col-md-4"><label class="form-label">Ubicacion (Argentina)</label><input class="form-control" name="ubicacion" required placeholder="Buenos Aires" /></div>
+            <div class="col-md-4">
+              <label class="form-label" for="publicar-ubicacion">Ubicacion (Argentina)</label>
+              <select class="form-select" id="publicar-ubicacion" name="ubicacion" required>
+                <option value="">Seleccionar provincia</option>
+              </select>
+            </div>
             <div class="col-12"><label class="form-label">Descripcion</label><textarea class="form-control" name="descripcion" rows="3" minlength="20" required></textarea></div>
-            <div class="col-12"><label class="form-label">Detalles de danios</label><textarea class="form-control" name="detallesDanios" rows="2" required></textarea></div>
+            <div class="col-12"><label class="form-label">Detalles de daños</label><textarea class="form-control" name="detallesDanios" rows="2" required></textarea></div>
             <div class="col-12"><label class="form-label">Fotos JPG (minimo 3, maximo 1MB cada una)</label><input class="form-control" name="imagenes" type="file" accept=".jpg,.jpeg,image/jpeg" multiple required /></div>
             <div class="col-12 d-flex gap-2">
               <button class="btn btn-danger" type="submit">Analizar con IA y publicar</button>

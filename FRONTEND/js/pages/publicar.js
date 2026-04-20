@@ -1,4 +1,5 @@
 import { initAppShell } from "../app-init.js";
+import { getFallbackCatalogsFromCars, loadCatalogs } from "../data/catalogs.js";
 import { getCars } from "../data/mock-data.js";
 import { requireAuth } from "../utils/auth.js";
 import { formatUsd, qs } from "../utils/dom.js";
@@ -13,9 +14,55 @@ if (!session) {
   const form = qs("#car-form");
   const preview = qs("#preview-zone");
   const alertZone = qs("#alert-zone");
+  const marcaSelect = qs("#publicar-marca");
+  const modeloSelect = qs("#publicar-modelo");
+  const ubicacionSelect = qs("#publicar-ubicacion");
+
+  let catalogs = {
+    brands: [],
+    provinces: []
+  };
 
   function showAlert(message, type = "danger") {
     alertZone.innerHTML = `<div class="alert alert-${type}">${message}</div>`;
+  }
+
+  function setSelectOptions(selectEl, options, defaultLabel) {
+    if (!selectEl) return;
+
+    const normalizedOptions = options
+      .map((option) => String(option || "").trim())
+      .filter(Boolean)
+      .sort((a, b) => a.localeCompare(b, "es"));
+
+    selectEl.innerHTML = `<option value="">${defaultLabel}</option>`;
+    normalizedOptions.forEach((option) => {
+      selectEl.insertAdjacentHTML("beforeend", `<option value="${option}">${option}</option>`);
+    });
+  }
+
+  function getModelsForBrand(brand) {
+    if (!brand) return [];
+    const selected = catalogs.brands.find((entry) => entry.marca === brand);
+    return selected?.modelos || [];
+  }
+
+  async function initCatalogFilters() {
+    const cars = getCars();
+
+    try {
+      catalogs = await loadCatalogs();
+    } catch {
+      catalogs = getFallbackCatalogsFromCars(cars);
+    }
+
+    setSelectOptions(
+      marcaSelect,
+      catalogs.brands.map((entry) => entry.marca),
+      "Seleccionar marca"
+    );
+    setSelectOptions(modeloSelect, [], "Seleccionar modelo");
+    setSelectOptions(ubicacionSelect, catalogs.provinces, "Seleccionar provincia");
   }
 
   function toBase64(file) {
@@ -44,6 +91,13 @@ if (!session) {
         : "La descripcion no parece corresponder a un auto usado."
     };
   }
+
+  await initCatalogFilters();
+
+  marcaSelect.addEventListener("change", () => {
+    const brand = marcaSelect.value;
+    setSelectOptions(modeloSelect, getModelsForBrand(brand), "Seleccionar modelo");
+  });
 
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
