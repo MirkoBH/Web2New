@@ -14,21 +14,16 @@ if (!session) {
   const form = qs("#car-form");
   const preview = qs("#preview-zone");
   const alertZone = qs("#alert-zone");
-  const marcaSelect = qs("#publicar-marca");
-  const marcaSearchInput = qs("#publicar-marca-search");
-  const modeloSelect = qs("#publicar-modelo");
-  const modeloSearchInput = qs("#publicar-modelo-search");
-  const ubicacionSelect = qs("#publicar-ubicacion");
-  const ubicacionSearchInput = qs("#publicar-ubicacion-search");
+  const marcaInput = qs("#publicar-marca");
+  const marcaList = qs("#publicar-marca-list");
+  const modeloInput = qs("#publicar-modelo");
+  const modeloList = qs("#publicar-modelo-list");
+  const ubicacionInput = qs("#publicar-ubicacion");
+  const ubicacionList = qs("#publicar-ubicacion-list");
 
   let catalogs = {
     brands: [],
     provinces: []
-  };
-  const searchState = {
-    marca: "",
-    modelo: "",
-    ubicacion: ""
   };
 
   function showAlert(message, type = "danger") {
@@ -43,59 +38,43 @@ if (!session) {
       .trim();
   }
 
-  function filterBySearch(options, searchTerm) {
-    const term = normalizeText(searchTerm);
-    if (!term) return options;
-    return options.filter((option) => normalizeText(option).includes(term));
-  }
+  function setDataListOptions(datalistEl, options) {
+    if (!datalistEl) return;
 
-  function setSelectOptions(selectEl, options, defaultLabel, selectedValue = "") {
-    if (!selectEl) return;
+    const normalizedOptions = [...new Set(options.map((option) => String(option || "").trim()).filter(Boolean))].sort((a, b) =>
+      a.localeCompare(b, "es")
+    );
 
-    const selectedNormalized = normalizeText(selectedValue);
-    const normalizedOptions = options
-      .map((option) => String(option || "").trim())
-      .filter(Boolean)
-      .sort((a, b) => a.localeCompare(b, "es"));
-
-    selectEl.innerHTML = "";
-    const defaultOption = document.createElement("option");
-    defaultOption.value = "";
-    defaultOption.textContent = defaultLabel;
-    selectEl.appendChild(defaultOption);
-
+    datalistEl.innerHTML = "";
     normalizedOptions.forEach((option) => {
       const optionEl = document.createElement("option");
       optionEl.value = option;
-      optionEl.textContent = option;
-      if (normalizeText(option) === selectedNormalized) {
-        optionEl.selected = true;
-      }
-      selectEl.appendChild(optionEl);
+      datalistEl.appendChild(optionEl);
     });
   }
 
   function getModelsForBrand(brand) {
-    if (!brand) return [];
-    const selected = catalogs.brands.find((entry) => entry.marca === brand);
+    if (!brand) {
+      return [...new Set(catalogs.brands.flatMap((entry) => entry.modelos || []))];
+    }
+
+    const selected = catalogs.brands.find((entry) => normalizeText(entry.marca) === normalizeText(brand));
     return selected?.modelos || [];
   }
 
-  function refreshMarcaOptions(selectedValue = "") {
-    const source = catalogs.brands.map((entry) => entry.marca);
-    const filtered = filterBySearch(source, searchState.marca);
-    setSelectOptions(marcaSelect, filtered, "Seleccionar marca", selectedValue);
+  function findCanonicalValue(value, options) {
+    const normalizedValue = normalizeText(value);
+    if (!normalizedValue) return "";
+    return options.find((option) => normalizeText(option) === normalizedValue) || "";
   }
 
-  function refreshModeloOptions(selectedValue = "") {
-    const source = getModelsForBrand(marcaSelect.value);
-    const filtered = filterBySearch(source, searchState.modelo);
-    setSelectOptions(modeloSelect, filtered, "Seleccionar modelo", selectedValue);
-  }
+  function refreshModeloListByBrand() {
+    const models = getModelsForBrand(marcaInput.value);
+    setDataListOptions(modeloList, models);
 
-  function refreshUbicacionOptions(selectedValue = "") {
-    const filtered = filterBySearch(catalogs.provinces, searchState.ubicacion);
-    setSelectOptions(ubicacionSelect, filtered, "Seleccionar provincia", selectedValue);
+    if (modeloInput.value && !findCanonicalValue(modeloInput.value, models)) {
+      modeloInput.value = "";
+    }
   }
 
   async function initCatalogFilters() {
@@ -107,9 +86,12 @@ if (!session) {
       catalogs = getFallbackCatalogsFromCars(cars);
     }
 
-    refreshMarcaOptions();
-    refreshModeloOptions();
-    refreshUbicacionOptions();
+    setDataListOptions(
+      marcaList,
+      catalogs.brands.map((entry) => entry.marca)
+    );
+    setDataListOptions(ubicacionList, catalogs.provinces);
+    refreshModeloListByBrand();
   }
 
   function toBase64(file) {
@@ -141,37 +123,8 @@ if (!session) {
 
   await initCatalogFilters();
 
-  marcaSearchInput.addEventListener("input", () => {
-    searchState.marca = marcaSearchInput.value;
-    const currentBrand = marcaSelect.value;
-    refreshMarcaOptions(currentBrand);
-    if (!marcaSelect.value) {
-      refreshModeloOptions();
-    }
-  });
-
-  marcaSelect.addEventListener("change", () => {
-    const brand = marcaSelect.value;
-    searchState.modelo = "";
-    modeloSearchInput.value = "";
-    if (!brand) {
-      refreshModeloOptions();
-      return;
-    }
-    refreshModeloOptions();
-  });
-
-  modeloSearchInput.addEventListener("input", () => {
-    searchState.modelo = modeloSearchInput.value;
-    const currentModel = modeloSelect.value;
-    refreshModeloOptions(currentModel);
-  });
-
-  ubicacionSearchInput.addEventListener("input", () => {
-    searchState.ubicacion = ubicacionSearchInput.value;
-    const currentProvince = ubicacionSelect.value;
-    refreshUbicacionOptions(currentProvince);
-  });
+  marcaInput.addEventListener("input", refreshModeloListByBrand);
+  marcaInput.addEventListener("change", refreshModeloListByBrand);
 
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
@@ -195,16 +148,38 @@ if (!session) {
       return;
     }
 
+    const validMarca = findCanonicalValue(
+      String(formData.get("marca") || "").trim(),
+      catalogs.brands.map((entry) => entry.marca)
+    );
+
+    if (!validMarca) {
+      showAlert("Selecciona una marca valida desde el dropdown.");
+      return;
+    }
+
+    const validModelo = findCanonicalValue(String(formData.get("modelo") || "").trim(), getModelsForBrand(validMarca));
+    if (!validModelo) {
+      showAlert("Selecciona un modelo valido para la marca elegida.");
+      return;
+    }
+
+    const validProvincia = findCanonicalValue(String(formData.get("ubicacion") || "").trim(), catalogs.provinces);
+    if (!validProvincia) {
+      showAlert("Selecciona una provincia valida de Argentina.");
+      return;
+    }
+
     const payload = {
-      marca: String(formData.get("marca") || "").trim(),
-      modelo: String(formData.get("modelo") || "").trim(),
+      marca: validMarca,
+      modelo: validModelo,
       color: String(formData.get("color") || "").trim(),
       anio: Number(formData.get("anio")),
       kilometraje: Number(formData.get("kilometraje")),
       transmision: String(formData.get("transmision") || ""),
       combustible: String(formData.get("combustible") || ""),
       precio: Number(formData.get("precio")),
-      ubicacion: String(formData.get("ubicacion") || "").trim(),
+      ubicacion: validProvincia,
       descripcion: String(formData.get("descripcion") || "").trim(),
       detallesDanios: String(formData.get("detallesDanios") || "").trim()
     };
@@ -246,14 +221,6 @@ if (!session) {
     showAlert(`Publicacion aprobada por IA (${ia.estado}, score ${ia.score}/10).`, "success");
     preview.innerHTML = `<p class="small text-secondary mb-0">Rango estimado: ${formatUsd(ia.rangoPrecioMin)} - ${formatUsd(ia.rangoPrecioMax)}</p>`;
     form.reset();
-    marcaSearchInput.value = "";
-    modeloSearchInput.value = "";
-    ubicacionSearchInput.value = "";
-    searchState.marca = "";
-    searchState.modelo = "";
-    searchState.ubicacion = "";
-    refreshMarcaOptions();
-    refreshModeloOptions();
-    refreshUbicacionOptions();
+    refreshModeloListByBrand();
   });
 }

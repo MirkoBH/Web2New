@@ -26,24 +26,18 @@
                 </div>
                 <div>
                   <label class="form-label" for="filtro-marca">Marca</label>
-                  <input id="filtro-marca-search" class="form-control mb-2" type="text" placeholder="Buscar marca..." autocomplete="off" />
-                  <select id="filtro-marca" name="marca" class="form-select">
-                    <option value="">Todas</option>
-                  </select>
+                  <input id="filtro-marca" name="marca" class="form-control" type="text" list="filtro-marca-list" placeholder="Todas" autocomplete="off" />
+                  <datalist id="filtro-marca-list"></datalist>
                 </div>
                 <div>
                   <label class="form-label" for="filtro-modelo">Modelo</label>
-                  <input id="filtro-modelo-search" class="form-control mb-2" type="text" placeholder="Buscar modelo..." autocomplete="off" />
-                  <select id="filtro-modelo" name="modelo" class="form-select">
-                    <option value="">Todos</option>
-                  </select>
+                  <input id="filtro-modelo" name="modelo" class="form-control" type="text" list="filtro-modelo-list" placeholder="Todos" autocomplete="off" />
+                  <datalist id="filtro-modelo-list"></datalist>
                 </div>
                 <div>
                   <label class="form-label" for="filtro-provincia">Provincia</label>
-                  <input id="filtro-provincia-search" class="form-control mb-2" type="text" placeholder="Buscar provincia..." autocomplete="off" />
-                  <select id="filtro-provincia" name="provincia" class="form-select">
-                    <option value="">Todas</option>
-                  </select>
+                  <input id="filtro-provincia" name="provincia" class="form-control" type="text" list="filtro-provincia-list" placeholder="Todas" autocomplete="off" />
+                  <datalist id="filtro-provincia-list"></datalist>
                 </div>
                 <div>
                   <label class="form-label" for="filtro-precio">Precio maximo (USD)</label>
