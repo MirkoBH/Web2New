@@ -25,6 +25,24 @@
                   <input id="filtro-texto" name="q" class="form-control" type="text" placeholder="Toyota, Corolla..." />
                 </div>
                 <div>
+                  <label class="form-label" for="filtro-marca">Marca</label>
+                  <select id="filtro-marca" name="marca" class="form-select">
+                    <option value="">Todas</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="form-label" for="filtro-modelo">Modelo</label>
+                  <select id="filtro-modelo" name="modelo" class="form-select">
+                    <option value="">Todos</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="form-label" for="filtro-provincia">Provincia</label>
+                  <select id="filtro-provincia" name="provincia" class="form-select">
+                    <option value="">Todas</option>
+                  </select>
+                </div>
+                <div>
                   <label class="form-label" for="filtro-precio">Precio maximo (USD)</label>
                   <input id="filtro-precio" name="precioMax" class="form-range" type="range" min="3000" max="100000" step="500" />
                   <div class="small text-secondary" id="precio-output"></div>
@@ -67,7 +85,7 @@
               <h1 class="h3 mb-0">Resultados</h1>
               <button class="btn btn-outline-light btn-sm" data-bs-toggle="offcanvas" data-bs-target="#compareDrawer">Comparador</button>
             </div>
-            <div class="row g-3" id="cars-grid"></div>
+            <div class="cars-grid" id="cars-grid"></div>
             <nav class="mt-4" aria-label="Paginacion listado">
               <ul class="pagination justify-content-center" id="pagination"></ul>
             </nav>

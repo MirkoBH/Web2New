@@ -86,10 +86,23 @@ main {
   font-weight: 600;
 }
 
+.cars-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 1rem;
+  align-items: stretch;
+  justify-items: center;
+}
+
 .car-card {
   background: rgba(12, 14, 18, 0.9);
   border: 1px solid rgba(255, 255, 255, 0.09) !important;
   transition: transform 200ms ease, box-shadow 200ms ease;
+  width: min(100%, 360px);
+}
+
+.car-card .card-title {
+  color: #d5dbe5;
 }
 
 .car-card:hover {
