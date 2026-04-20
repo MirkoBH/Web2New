@@ -59,7 +59,6 @@ function refreshModelDatalistByBrand() {
 function getFiltersFromUrl() {
   const params = new URLSearchParams(window.location.search);
   return {
-    q: params.get("q") || "",
     marca: params.get("marca") || "",
     modelo: params.get("modelo") || "",
     provincia: params.get("provincia") || "",
@@ -82,11 +81,6 @@ function pushFiltersToUrl(filters) {
 
 function applyFilters(cars, filters) {
   let data = [...cars];
-
-  if (filters.q) {
-    const q = filters.q.toLowerCase();
-    data = data.filter((car) => `${car.marca} ${car.modelo}`.toLowerCase().includes(q));
-  }
 
   if (filters.marca) {
     data = data.filter((car) => normalizeText(car.marca) === normalizeText(filters.marca));
@@ -132,7 +126,6 @@ function renderPagination(totalItems, page, filters) {
 }
 
 function fillForm(filters) {
-  form.q.value = filters.q;
   marcaSelect.value = filters.marca;
   modeloSelect.value = filters.modelo;
   provinciaSelect.value = filters.provincia;
@@ -203,7 +196,6 @@ await init();
 form.addEventListener("submit", (event) => {
   event.preventDefault();
   const filters = {
-    q: form.q.value.trim(),
     marca: marcaSelect.value,
     modelo: modeloSelect.value,
     provincia: provinciaSelect.value,
@@ -223,7 +215,6 @@ form.precioMax.addEventListener("input", () => {
 
 qs("#reset-filtros").addEventListener("click", () => {
   const resetFilters = {
-    q: "",
     marca: "",
     modelo: "",
     provincia: "",
