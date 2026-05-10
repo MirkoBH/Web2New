@@ -18,10 +18,14 @@ export class IaService {
   private readonly logger = new Logger(IaService.name);
   private readonly groq: Groq | null;
 
+  // Modelo con visión para análisis de imágenes
+  private readonly MODELO_VISION = 'meta-llama/llama-4-scout-17b-16e-instruct';
+  // Modelo de texto como fallback si no hay imágenes
+  private readonly MODELO_TEXTO  = 'llama-3.3-70b-versatile';
+
   constructor(private readonly config: ConfigService) {
     const apiKey = config.get<string>('GROQ_API_KEY');
-
-    if (apiKey && apiKey.trim().length > 0) {
+    if (apiKey?.trim()) {
       this.groq = new Groq({ apiKey: apiKey.trim() });
       this.logger.log(`✅ Groq inicializado (key: ...${apiKey.slice(-6)})`);
     } else {
@@ -48,30 +52,36 @@ export class IaService {
   }
 
   private async analizarConGroq(auto: Auto): Promise<ResultadoAnalisisIA> {
-    const completion = await this.groq!.chat.completions.create({
-      model: 'llama-3.3-70b-versatile',
-      temperature: 0.3,
-      max_tokens: 400,
-      response_format: { type: 'json_object' },
-      messages: [
-        {
-          role: 'system',
-          content: `Eres un experto tasador de autos usados argentinos. 
-Analizás vehículos y devolvés un JSON con esta estructura exacta:
-{
-  "estado": "Excelente" | "Buen estado" | "Regular" | "Requiere reparacion",
-  "puntaje": número del 1 al 10 con un decimal,
-  "danios": "descripción breve de daños detectados o Sin daños detectados",
-  "rangoPrecioMin": número entero en USD,
-  "rangoPrecioMax": número entero en USD,
-  "resumen": "resumen de 1-2 oraciones en español argentino",
-  "aprobado": true o false
-}
-Respondé SOLO con el JSON, sin texto adicional.`,
-        },
-        {
-          role: 'user',
-          content: `Analizá este vehículo:
+    // Extraer URLs públicas de las imágenes del auto
+    const urlsImagenes: string[] = (auto.imagenes || [])
+      .sort((a: any, b: any) => (a.orden ?? 0) - (b.orden ?? 0))
+      .map((img: any) => img.urlPublica || img)
+      .filter((url: string) => typeof url === 'string' && url.startsWith('http'))
+      .slice(0, 4); // máximo 4 imágenes para no superar límites
+
+    const tieneImagenes = urlsImagenes.length > 0;
+    const modelo = tieneImagenes ? this.MODELO_VISION : this.MODELO_TEXTO;
+
+    this.logger.log(`Usando modelo: ${modelo} | Imágenes: ${urlsImagenes.length}`);
+
+    // ── Construir el mensaje con o sin imágenes ───────────────
+    const contenidoUsuario: any[] = [];
+
+    // Agregar imágenes si las hay
+    if (tieneImagenes) {
+      for (const url of urlsImagenes) {
+        contenidoUsuario.push({
+          type: 'image_url',
+          image_url: { url },
+        });
+      }
+    }
+
+    // Agregar texto con datos del vehículo
+    contenidoUsuario.push({
+      type: 'text',
+      text: `${tieneImagenes ? 'Analizá las imágenes del vehículo y también los siguientes datos:' : 'Analizá este vehículo:'}
+
 - Marca: ${auto.marca}
 - Modelo: ${auto.modelo}
 - Año: ${auto.anio}
@@ -81,13 +91,44 @@ Respondé SOLO con el JSON, sin texto adicional.`,
 - Precio solicitado: USD ${auto.precio}
 - Ubicación: ${auto.ubicacion}
 - Descripción del vendedor: ${auto.descripcion}
-- Daños declarados: ${auto.detallesDanios || 'Ninguno'}`,
+- Daños declarados por el vendedor: ${auto.detallesDanios || 'Ninguno'}
+
+${tieneImagenes ? 'Examiná las fotos en busca de daños visibles, rayones, golpes, óxido o inconsistencias con la descripción.' : ''}
+
+Respondé SOLO con el JSON solicitado.`,
+    });
+
+    const completion = await this.groq!.chat.completions.create({
+      model: modelo,
+      temperature: 0.2,
+      max_tokens: 500,
+      response_format: { type: 'json_object' },
+      messages: [
+        {
+          role: 'system',
+          content: `Sos un experto tasador de autos usados del mercado argentino.
+${tieneImagenes ? 'Analizás imágenes de vehículos para detectar daños visibles y estimás su valor de mercado.' : 'Analizás datos de vehículos para estimar su valor de mercado.'}
+
+Devolvés SIEMPRE un JSON con esta estructura exacta sin texto adicional:
+{
+  "estado": "Excelente" | "Buen estado" | "Regular" | "Requiere reparacion",
+  "puntaje": número del 1.0 al 10.0,
+  "danios": "descripción de daños visibles en las fotos, o Sin daños detectados",
+  "rangoPrecioMin": número entero en USD según mercado argentino,
+  "rangoPrecioMax": número entero en USD según mercado argentino,
+  "resumen": "resumen de 1-2 oraciones en español argentino",
+  "aprobado": true si el vehículo parece legítimo y en condición aceptable, false si hay inconsistencias graves
+}`,
+        },
+        {
+          role: 'user',
+          content: contenidoUsuario,
         },
       ],
     });
 
     const texto = completion.choices[0]?.message?.content?.trim() || '{}';
-    this.logger.log(`Respuesta Groq: ${texto.substring(0, 150)}`);
+    this.logger.log(`Respuesta Groq: ${texto.substring(0, 200)}`);
 
     const parsed = JSON.parse(texto);
 
