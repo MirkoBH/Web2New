@@ -14,20 +14,21 @@ export interface ArchivoSubido {
 export class StorageService {
   private readonly logger = new Logger(StorageService.name);
   private readonly BUCKET = 'imagenes-autos';
-
-  // Cliente con service_role para operaciones del backend (bypass RLS)
-  private readonly supabaseAdmin: SupabaseClient;
+  private readonly supabase: SupabaseClient;
 
   constructor(private readonly config: ConfigService) {
-    const url = `https://${this.config.get<string>('SUPABASE_PROJECT_REF')}.supabase.co`;
-    const serviceKey = this.config.get<string>('SUPABASE_SERVICE_KEY') ?? '';
+    const projectRef = this.config.get<string>('SUPABASE_PROJECT_REF') ?? '';
+    const anonKey = this.config.get<string>('SUPABASE_ANON_KEY') ?? '';
+    const url = `https://${projectRef}.supabase.co`;
 
-    this.supabaseAdmin = createClient(url, serviceKey, {
+    // Usamos la anon key — las políticas del bucket permiten INSERT/DELETE sin auth.uid()
+    // El control de acceso real lo hace NestJS con su propio sistema de JWT + roles
+    this.supabase = createClient(url, anonKey, {
       auth: { persistSession: false, autoRefreshToken: false },
     });
   }
 
-  // ── Subir una imagen al bucket ─────────────────────────────
+  // ── Subir imagen al bucket ─────────────────────────────────
   async subirImagen(
     autoId: string,
     buffer: Buffer,
@@ -36,10 +37,10 @@ export class StorageService {
   ): Promise<ArchivoSubido> {
     const ext = extname(nombreOriginal) || `.${mimetype.split('/')[1]}`;
     const nombreArchivo = `${uuidv4()}${ext}`;
-    // Estructura: imagenes-autos/{autoId}/{uuid}.ext
+    // Estructura en el bucket: imagenes-autos/{autoId}/{uuid}.ext
     const storagePath = `${autoId}/${nombreArchivo}`;
 
-    const { error } = await this.supabaseAdmin.storage
+    const { error } = await this.supabase.storage
       .from(this.BUCKET)
       .upload(storagePath, buffer, {
         contentType: mimetype,
@@ -47,12 +48,12 @@ export class StorageService {
       });
 
     if (error) {
-      this.logger.error(`Error subiendo imagen: ${error.message}`);
+      this.logger.error(`Error subiendo imagen al bucket: ${error.message}`);
       throw new InternalServerErrorException(`Error al subir imagen: ${error.message}`);
     }
 
-    // URL pública permanente del bucket público
-    const { data } = this.supabaseAdmin.storage
+    // URL pública permanente (el bucket es público)
+    const { data } = this.supabase.storage
       .from(this.BUCKET)
       .getPublicUrl(storagePath);
 
@@ -63,9 +64,9 @@ export class StorageService {
     };
   }
 
-  // ── Eliminar una imagen del bucket por su path ─────────────
+  // ── Eliminar una imagen del bucket ─────────────────────────
   async eliminarImagen(storagePath: string): Promise<void> {
-    const { error } = await this.supabaseAdmin.storage
+    const { error } = await this.supabase.storage
       .from(this.BUCKET)
       .remove([storagePath]);
 
@@ -76,14 +77,14 @@ export class StorageService {
 
   // ── Eliminar toda la carpeta de un auto en el bucket ───────
   async eliminarCarpetaAuto(autoId: string): Promise<void> {
-    const { data, error } = await this.supabaseAdmin.storage
+    const { data, error } = await this.supabase.storage
       .from(this.BUCKET)
       .list(autoId);
 
     if (error || !data?.length) return;
 
     const paths = data.map((f) => `${autoId}/${f.name}`);
-    const { error: delError } = await this.supabaseAdmin.storage
+    const { error: delError } = await this.supabase.storage
       .from(this.BUCKET)
       .remove(paths);
 
