@@ -7,5 +7,5 @@ initAppShell();
 
 const featuredGrid = qs("#featured-cars");
 if (featuredGrid) {
-  renderCards(featuredGrid, getCars().slice(0, 3));
+  renderCards(featuredGrid, getCars().slice(0, 6));
 }

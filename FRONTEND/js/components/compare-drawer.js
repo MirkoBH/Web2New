@@ -32,7 +32,7 @@ export function refreshCompareDrawer() {
   const selected = cars.filter((c) => comparedIds.includes(c.id));
 
   if (selected.length < 2) {
-    setSafeHtml(content, "Selecciona dos autos para ver la comparacion.");
+    setSafeHtml(content, "Seleccioná 2 autos para ver la comparación.");
     return;
   }
 
@@ -52,11 +52,11 @@ export function refreshCompareDrawer() {
           </thead>
           <tbody>
             ${row("Precio", formatUsd(a.precio), formatUsd(b.precio))}
-            ${row("Danios", a.detallesDanios, b.detallesDanios)}
+            ${row("Daños", a.detallesDanios, b.detallesDanios)}
             ${row("Kilometraje", formatKm(a.kilometraje), formatKm(b.kilometraje))}
-            ${row("Anio", a.anio, b.anio)}
+            ${row("Año", a.anio, b.anio)}
             ${row("Combustible", a.combustible, b.combustible)}
-            ${row("IA", a.ia?.resumen || "N/A", b.ia?.resumen || "N/A")}
+            ${row("IA", a.ia?.resumen || "Sin datos", b.ia?.resumen || "Sin datos")}
           </tbody>
         </table>
       </div>

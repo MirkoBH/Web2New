@@ -20,17 +20,17 @@ form.addEventListener("submit", (event) => {
   const user = getUsers().find((x) => x.email.toLowerCase() === email && x.password === password);
 
   if (!user) {
-    showAlert("Credenciales invalidas.");
+    showAlert("Credenciales inválidas.");
     return;
   }
 
   if (!user.emailVerificado) {
-    showAlert("Debes verificar el email antes de iniciar sesion.");
+    showAlert("Debés verificar el email antes de iniciar sesión.");
     return;
   }
 
   writeSession({ userId: user.id, nombre: user.nombre, role: user.role, email: user.email });
-  showAlert("Sesion iniciada. Redirigiendo...", "success");
+  showAlert("Sesión iniciada. Redirigiendo...", "success");
   setTimeout(() => {
     window.location.href = "perfil.html";
   }, 500);

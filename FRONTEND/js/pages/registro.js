@@ -28,12 +28,12 @@ form.addEventListener("submit", (event) => {
 
   const users = getUsers();
   if (users.some((x) => x.email.toLowerCase() === email)) {
-    showAlert("Ese email ya esta registrado.");
+    showAlert("Ese email ya está registrado.");
     return;
   }
 
   if (!validPassword(password)) {
-    showAlert("La contrasena debe tener minimo 8 caracteres, letras, numeros y simbolos.");
+    showAlert("La contraseña debe tener mínimo 8 caracteres, letras, números y símbolos.");
     return;
   }
 
@@ -50,7 +50,7 @@ form.addEventListener("submit", (event) => {
 
   writeJson(getKey("USERS"), [...users, newUser]);
   writeSession({ userId: newUser.id, nombre: newUser.nombre, role: newUser.role, email: newUser.email });
-  showAlert("Cuenta creada correctamente.", "success");
+  showAlert("¡Cuenta creada correctamente!", "success");
   setTimeout(() => {
     window.location.href = "perfil.html";
   }, 500);

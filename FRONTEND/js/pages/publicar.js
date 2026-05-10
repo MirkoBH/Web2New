@@ -120,7 +120,7 @@ if (!session) {
       rangoPrecioMin: Math.round(payload.precio * 0.92),
       rangoPrecioMax: Math.round(payload.precio * 1.08),
       resumen: hasCarKeyword
-        ? "Publicacion aprobada por IA. Imagenes y descripcion son coherentes con un auto."
+        ? "Publicación aprobada por IA. Las imágenes y descripción son coherentes con un auto."
         : "La descripcion no parece corresponder a un auto usado."
     };
   }
@@ -203,7 +203,7 @@ if (!session) {
     writeJson(getKey("IA_LOGS"), iaLogs);
 
     if (!ia.aprobado) {
-      showAlert("La IA rechazo la publicacion. Revisa descripcion e imagenes.");
+      showAlert("La IA rechazó la publicación. Revisá la descripción y las imágenes.");
       return;
     }
 
@@ -219,7 +219,7 @@ if (!session) {
 
     writeJson(getKey("CARS"), cars);
 
-    showAlert(`Publicacion aprobada por IA (${ia.estado}, score ${ia.score}/10).`, "success");
+    showAlert(`✓ Publicación aprobada por IA — ${ia.estado} (puntaje ${ia.score}/10)`, "success");
     preview.innerHTML = `<p class="small text-secondary mb-0">Rango estimado: ${formatUsd(ia.rangoPrecioMin)} - ${formatUsd(ia.rangoPrecioMax)}</p>`;
     form.reset();
     marcaSearchable.render({ preserveValue: false });

@@ -1,10 +1,12 @@
 import { carCardTemplate, toggleCompare, toggleWishlist } from "../components/car-card.js";
 import { refreshCompareDrawer } from "../components/compare-drawer.js";
 
-export function renderCards(container, cars) {
-  container.innerHTML = cars.map(carCardTemplate).join("");
+// ── Renderizar grilla de tarjetas de autos ────────────────────
+export function renderCards(contenedor, autos) {
+  contenedor.innerHTML = autos.map(carCardTemplate).join("");
 
-  container.querySelectorAll(".btn-compare").forEach((btn) => {
+  // Botones de comparador
+  contenedor.querySelectorAll(".btn-compare").forEach((btn) => {
     btn.addEventListener("click", () => {
       toggleCompare(btn.dataset.id);
       refreshCompareDrawer();
@@ -12,7 +14,8 @@ export function renderCards(container, cars) {
     });
   });
 
-  container.querySelectorAll(".btn-wishlist").forEach((btn) => {
+  // Botones de favoritos
+  contenedor.querySelectorAll(".btn-favorito").forEach((btn) => {
     btn.addEventListener("click", () => {
       toggleWishlist(btn.dataset.id);
       window.location.reload();
