@@ -23,7 +23,7 @@ export class IaService {
 
     if (apiKey && apiKey.trim().length > 0) {
       this.gemini = new GoogleGenerativeAI(apiKey.trim());
-      this.logger.log(`✅ Gemini inicializado correctamente (key: ...${apiKey.slice(-6)})`);
+      this.logger.log(`✅ Gemini inicializado (key: ...${apiKey.slice(-6)})`);
     } else {
       this.gemini = null;
       this.logger.warn('⚠️  GEMINI_API_KEY no configurada — se usará análisis simulado');
@@ -32,28 +32,27 @@ export class IaService {
 
   async analizarAuto(auto: Auto): Promise<ResultadoAnalisisIA> {
     if (!this.gemini) {
-      this.logger.warn('Gemini no disponible — usando análisis simulado');
       return this.analisisSimulado(auto);
     }
-
     try {
       this.logger.log(`Iniciando análisis Gemini para: ${auto.marca} ${auto.modelo}`);
       const resultado = await this.analizarConGemini(auto);
-      this.logger.log(`✅ Análisis Gemini completado — estado: ${resultado.estado}, puntaje: ${resultado.puntaje}`);
+      this.logger.log(`✅ Gemini completado — ${resultado.estado}, puntaje: ${resultado.puntaje}`);
       return resultado;
     } catch (error) {
-      // Mostrar el error completo para diagnóstico
-      this.logger.error(`❌ Error Gemini: ${error?.message || error}`);
-      this.logger.error(`Stack: ${error?.stack}`);
-      this.logger.warn('Cayendo a análisis simulado por error en Gemini');
+      this.logger.error(`❌ Error Gemini: ${error?.message}`);
       return this.analisisSimulado(auto);
     }
   }
 
   private async analizarConGemini(auto: Auto): Promise<ResultadoAnalisisIA> {
-    const modelo = this.gemini!.getGenerativeModel({ model: 'gemini-1.5-flash-latest' });
+    // Usar v1 explícitamente — compatible con free tier
+    const modelo = this.gemini!.getGenerativeModel(
+      { model: 'gemini-1.5-flash' },
+      { apiVersion: 'v1' },
+    );
 
-    const prompt = `Eres un experto tasador de autos usados argentinos. Analizá el siguiente vehículo y respondé ÚNICAMENTE con un JSON válido sin markdown ni bloques de código.
+    const prompt = `Eres un experto tasador de autos usados argentinos. Analizá el siguiente vehículo y respondé ÚNICAMENTE con JSON válido sin markdown.
 
 Vehículo:
 - Marca: ${auto.marca}
@@ -64,23 +63,20 @@ Vehículo:
 - Transmisión: ${auto.transmision}
 - Precio solicitado: USD ${auto.precio}
 - Ubicación: ${auto.ubicacion}
-- Descripción del vendedor: ${auto.descripcion}
+- Descripción: ${auto.descripcion}
 - Daños declarados: ${auto.detallesDanios || 'Ninguno'}
 
-Respondé SOLO con este JSON, sin texto extra:
-{"estado":"Buen estado","puntaje":7.5,"danios":"descripción de daños","rangoPrecioMin":10000,"rangoPrecioMax":12000,"resumen":"resumen breve","aprobado":true}`;
+Respondé SOLO con este JSON sin texto extra:
+{"estado":"Buen estado","puntaje":7.5,"danios":"descripción","rangoPrecioMin":10000,"rangoPrecioMax":12000,"resumen":"resumen breve","aprobado":true}`;
 
     const resultado = await modelo.generateContent(prompt);
-    const texto = resultado.response.text().trim();
-    this.logger.log(`Respuesta raw de Gemini: ${texto.substring(0, 200)}`);
-
-    // Limpiar posibles bloques markdown
-    const jsonLimpio = texto
+    const texto = resultado.response.text().trim()
       .replace(/```json\s*/gi, '')
       .replace(/```\s*/g, '')
       .trim();
 
-    const parsed = JSON.parse(jsonLimpio);
+    this.logger.log(`Respuesta Gemini: ${texto.substring(0, 150)}`);
+    const parsed = JSON.parse(texto);
 
     return {
       estado:         parsed.estado         || 'Regular',
@@ -107,7 +103,7 @@ Respondé SOLO con este JSON, sin texto extra:
       danios:         'Análisis simulado — sin API key configurada.',
       rangoPrecioMin: Math.round(auto.precio * 0.9),
       rangoPrecioMax: Math.round(auto.precio * 1.08),
-      resumen:        `Vehículo ${auto.marca} ${auto.modelo} analizado en modo de simulación. Configurá GEMINI_API_KEY para análisis real.`,
+      resumen:        `Vehículo ${auto.marca} ${auto.modelo} analizado en modo de simulación.`,
       aprobado:       puntaje >= 6,
     };
   }
