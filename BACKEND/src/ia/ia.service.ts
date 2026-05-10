@@ -51,7 +51,7 @@ export class IaService {
   }
 
   private async analizarConGemini(auto: Auto): Promise<ResultadoAnalisisIA> {
-    const modelo = this.gemini!.getGenerativeModel({ model: 'gemini-2.0-flash' });
+    const modelo = this.gemini!.getGenerativeModel({ model: 'gemini-1.5-flash-latest' });
 
     const prompt = `Eres un experto tasador de autos usados argentinos. Analizá el siguiente vehículo y respondé ÚNICAMENTE con un JSON válido sin markdown ni bloques de código.
 
