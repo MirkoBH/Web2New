@@ -4,10 +4,12 @@ import {
   Entity,
   JoinColumn,
   ManyToOne,
+  OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
 import { Usuario } from '../users/usuario.entity';
+import { ImagenAuto } from './imagen-auto.entity';
 
 export enum TipoCombustible {
   NAFTA = 'Nafta',
@@ -19,13 +21,6 @@ export enum TipoCombustible {
 export enum TipoTransmision {
   MANUAL = 'Manual',
   AUTOMATICO = 'Automatico',
-}
-
-export enum EstadoIA {
-  EXCELENTE = 'Excelente',
-  BUEN_ESTADO = 'Buen estado',
-  REGULAR = 'Regular',
-  REQUIERE_REPARACION = 'Requiere reparacion',
 }
 
 @Entity('autos')
@@ -73,9 +68,9 @@ export class Auto {
   @Column({ type: 'text', nullable: true })
   detallesDanios: string;
 
-  // URLs de imágenes almacenadas (JSON array)
-  @Column({ type: 'simple-array', nullable: true })
-  imagenes: string[];
+  // ── Relación con imágenes (almacenadas en Supabase Storage) ──
+  @OneToMany(() => ImagenAuto, (img) => img.auto, { eager: true, cascade: true })
+  imagenes: ImagenAuto[];
 
   // ── Resultado del análisis de IA ──────────────────────────
   @Column({ nullable: true, length: 40 })
