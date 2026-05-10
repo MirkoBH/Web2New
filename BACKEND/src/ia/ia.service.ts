@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import Groq from 'groq-sdk';
 import { Auto } from '../cars/auto.entity';
 
 export interface ResultadoAnalisisIA {
@@ -16,45 +16,62 @@ export interface ResultadoAnalisisIA {
 @Injectable()
 export class IaService {
   private readonly logger = new Logger(IaService.name);
-  private readonly gemini: GoogleGenerativeAI | null;
+  private readonly groq: Groq | null;
 
   constructor(private readonly config: ConfigService) {
-    const apiKey = config.get<string>('GEMINI_API_KEY');
+    const apiKey = config.get<string>('GROQ_API_KEY');
 
     if (apiKey && apiKey.trim().length > 0) {
-      this.gemini = new GoogleGenerativeAI(apiKey.trim());
-      this.logger.log(`✅ Gemini inicializado (key: ...${apiKey.slice(-6)})`);
+      this.groq = new Groq({ apiKey: apiKey.trim() });
+      this.logger.log(`✅ Groq inicializado (key: ...${apiKey.slice(-6)})`);
     } else {
-      this.gemini = null;
-      this.logger.warn('⚠️  GEMINI_API_KEY no configurada — se usará análisis simulado');
+      this.groq = null;
+      this.logger.warn('⚠️  GROQ_API_KEY no configurada — se usará análisis simulado');
     }
   }
 
   async analizarAuto(auto: Auto): Promise<ResultadoAnalisisIA> {
-    if (!this.gemini) {
+    if (!this.groq) {
+      this.logger.warn('Groq no disponible — usando análisis simulado');
       return this.analisisSimulado(auto);
     }
+
     try {
-      this.logger.log(`Iniciando análisis Gemini para: ${auto.marca} ${auto.modelo}`);
-      const resultado = await this.analizarConGemini(auto);
-      this.logger.log(`✅ Gemini completado — ${resultado.estado}, puntaje: ${resultado.puntaje}`);
+      this.logger.log(`Iniciando análisis IA para: ${auto.marca} ${auto.modelo}`);
+      const resultado = await this.analizarConGroq(auto);
+      this.logger.log(`✅ Análisis completado — ${resultado.estado}, puntaje: ${resultado.puntaje}`);
       return resultado;
     } catch (error) {
-      this.logger.error(`❌ Error Gemini: ${error?.message}`);
+      this.logger.error(`❌ Error Groq: ${error?.message}`);
       return this.analisisSimulado(auto);
     }
   }
 
-  private async analizarConGemini(auto: Auto): Promise<ResultadoAnalisisIA> {
-    // Usar v1 explícitamente — compatible con free tier
-    const modelo = this.gemini!.getGenerativeModel(
-      { model: 'gemini-1.5-flash' },
-      { apiVersion: 'v1' },
-    );
-
-    const prompt = `Eres un experto tasador de autos usados argentinos. Analizá el siguiente vehículo y respondé ÚNICAMENTE con JSON válido sin markdown.
-
-Vehículo:
+  private async analizarConGroq(auto: Auto): Promise<ResultadoAnalisisIA> {
+    const completion = await this.groq!.chat.completions.create({
+      model: 'llama-3.3-70b-versatile',
+      temperature: 0.3,
+      max_tokens: 400,
+      response_format: { type: 'json_object' },
+      messages: [
+        {
+          role: 'system',
+          content: `Eres un experto tasador de autos usados argentinos. 
+Analizás vehículos y devolvés un JSON con esta estructura exacta:
+{
+  "estado": "Excelente" | "Buen estado" | "Regular" | "Requiere reparacion",
+  "puntaje": número del 1 al 10 con un decimal,
+  "danios": "descripción breve de daños detectados o Sin daños detectados",
+  "rangoPrecioMin": número entero en USD,
+  "rangoPrecioMax": número entero en USD,
+  "resumen": "resumen de 1-2 oraciones en español argentino",
+  "aprobado": true o false
+}
+Respondé SOLO con el JSON, sin texto adicional.`,
+        },
+        {
+          role: 'user',
+          content: `Analizá este vehículo:
 - Marca: ${auto.marca}
 - Modelo: ${auto.modelo}
 - Año: ${auto.anio}
@@ -63,19 +80,15 @@ Vehículo:
 - Transmisión: ${auto.transmision}
 - Precio solicitado: USD ${auto.precio}
 - Ubicación: ${auto.ubicacion}
-- Descripción: ${auto.descripcion}
-- Daños declarados: ${auto.detallesDanios || 'Ninguno'}
+- Descripción del vendedor: ${auto.descripcion}
+- Daños declarados: ${auto.detallesDanios || 'Ninguno'}`,
+        },
+      ],
+    });
 
-Respondé SOLO con este JSON sin texto extra:
-{"estado":"Buen estado","puntaje":7.5,"danios":"descripción","rangoPrecioMin":10000,"rangoPrecioMax":12000,"resumen":"resumen breve","aprobado":true}`;
+    const texto = completion.choices[0]?.message?.content?.trim() || '{}';
+    this.logger.log(`Respuesta Groq: ${texto.substring(0, 150)}`);
 
-    const resultado = await modelo.generateContent(prompt);
-    const texto = resultado.response.text().trim()
-      .replace(/```json\s*/gi, '')
-      .replace(/```\s*/g, '')
-      .trim();
-
-    this.logger.log(`Respuesta Gemini: ${texto.substring(0, 150)}`);
     const parsed = JSON.parse(texto);
 
     return {
@@ -100,7 +113,7 @@ Respondé SOLO con este JSON sin texto extra:
     return {
       estado,
       puntaje,
-      danios:         'Análisis simulado — sin API key configurada.',
+      danios:         'Análisis simulado — configurá GROQ_API_KEY para análisis real.',
       rangoPrecioMin: Math.round(auto.precio * 0.9),
       rangoPrecioMax: Math.round(auto.precio * 1.08),
       resumen:        `Vehículo ${auto.marca} ${auto.modelo} analizado en modo de simulación.`,
