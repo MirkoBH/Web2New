@@ -1,12 +1,13 @@
+// ─────────────────────────────────────────────────────────────
+// AutoPulse – Utilidades de almacenamiento local
+// La sesión guarda: userId, nombre, role, email, token (JWT)
+// El resto (COMPARE, WISHLIST) sigue en localStorage
+// ─────────────────────────────────────────────────────────────
+
 const KEYS = {
-  SESSION: "web2_session",
-  USERS: "web2_users",
-  CARS: "web2_cars",
-  COMPARE: "web2_compare",
-  QUESTIONS: "web2_questions",
+  SESSION:  "web2_session",
+  COMPARE:  "web2_compare",
   WISHLIST: "web2_wishlist",
-  IA_LOGS: "web2_ia_logs",
-  SEEDED: "web2_seeded"
 };
 
 export function getKey(name) {
@@ -16,11 +17,7 @@ export function getKey(name) {
 export function readJson(key, fallback) {
   const raw = localStorage.getItem(key);
   if (!raw) return fallback;
-  try {
-    return JSON.parse(raw);
-  } catch {
-    return fallback;
-  }
+  try { return JSON.parse(raw); } catch { return fallback; }
 }
 
 export function writeJson(key, value) {
