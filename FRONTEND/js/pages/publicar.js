@@ -5,7 +5,7 @@ import { requireAuth } from "../utils/auth.js";
 import { setupSearchableSingleSelect } from "../utils/searchable-select.js";
 import { formatUsd, qs } from "../utils/dom.js";
 
-const sesion = requireAuth(["vendedor"]);
+const sesion = requireAuth("vendedor");
 if (!sesion) {
   // redirigido
 } else {

@@ -159,8 +159,14 @@ if (!idAuto) {
 
     // ── Botón comparar ──────────────────────────────────────
     qs("#btn-comparar")?.addEventListener("click", () => {
+      // Doble verificación: no comparar auto propio
+      if (esElDuenio) {
+        alert("No podés comparar tu propia publicación.");
+        return;
+      }
       const comparador = readJson(getKey("COMPARE"), []);
-      if (comparador.includes(auto.id)) {
+      // Evitar agregar el mismo auto dos veces
+      if (comparador.filter((id) => id === auto.id).length > 0) {
         writeJson(getKey("COMPARE"), comparador.filter((id) => id !== auto.id));
         qs("#btn-comparar").textContent = "+ Comparar";
       } else if (comparador.length >= 2) {
@@ -173,6 +179,15 @@ if (!idAuto) {
 
     // ── Botón favorito ──────────────────────────────────────
     qs("#btn-favorito")?.addEventListener("click", () => {
+      // Doble verificación: no guardar auto propio como favorito
+      if (esElDuenio) {
+        alert("No podés guardar tu propia publicación como favorito.");
+        return;
+      }
+      if (!sesion) {
+        window.location.href = "login.html";
+        return;
+      }
       const wishlist = readJson(getKey("WISHLIST"), []);
       const existe   = wishlist.find((x) => x.userId === sesion.userId && x.carId === auto.id);
       if (existe) {
