@@ -137,19 +137,15 @@ main {
   z-index: 2;
 }
 
-.hero-imagen {
-  width: 100%;
-  height: 460px;
-  object-fit: cover;
-  opacity: 0.75;
-}
-
-/* Alias */
+.hero-imagen,
 .hero-image {
   width: 100%;
-  height: 460px;
+  height: 100%;
+  min-height: 420px;
   object-fit: cover;
-  opacity: 0.75;
+  object-position: center;
+  display: block;
+  opacity: 0.85;
 }
 
 .hero-subtitulo {
