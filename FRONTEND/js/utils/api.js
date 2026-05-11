@@ -87,11 +87,10 @@ export const carsApi = {
   },
   obtener: (id) => apiFetch(`/cars/${id}`),
   misAutos: () => apiFetch("/cars/mis-autos"),
-  crear: (datos) => apiFetch("/cars", { method: "POST", body: JSON.stringify(datos) }),
+  // Endpoint unificado: datos + imágenes en un solo request, IA analiza antes de guardar
+  publicar: (formData) => apiFetchMultipart("/cars/publicar", formData),
   actualizar: (id, datos) => apiFetch(`/cars/${id}`, { method: "PATCH", body: JSON.stringify(datos) }),
   eliminar: (id) => apiFetch(`/cars/${id}`, { method: "DELETE" }),
-  subirImagenes: (id, formData) => apiFetchMultipart(`/cars/${id}/upload-images`, formData),
-  analizarIA: (id) => apiFetch(`/cars/${id}/analizar-ia`, { method: "POST" }),
 };
 
 // ══════════════════════════════════════════════════════════════

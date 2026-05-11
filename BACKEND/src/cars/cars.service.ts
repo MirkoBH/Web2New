@@ -8,9 +8,9 @@ import { Repository } from 'typeorm';
 import { Auto } from './auto.entity';
 import { ImagenAuto } from './imagen-auto.entity';
 import { StorageService, ArchivoSubido } from './storage.service';
-import { CrearAutoDto } from './dto/crear-auto.dto';
 import { ActualizarAutoDto } from './dto/actualizar-auto.dto';
 import { FiltrosAutoDto } from './dto/filtros-auto.dto';
+import { ResultadoAnalisisIA } from '../ia/ia.service';
 
 @Injectable()
 export class CarsService {
@@ -22,36 +22,51 @@ export class CarsService {
     private readonly storageService: StorageService,
   ) {}
 
-  // ── Crear publicación ──────────────────────────────────────
-  async crear(vendedorId: string, dto: CrearAutoDto): Promise<Auto> {
-    const auto = this.autosRepo.create({ ...dto, vendedorId, activo: false }); // inactivo hasta aprobar IA
+  // ── Crear auto ya aprobado por IA (activo: true desde el inicio) ─
+  async crearAprobado(
+    vendedorId: string,
+    datos: Partial<Auto>,
+    analisis: ResultadoAnalisisIA,
+  ): Promise<Auto> {
+    const auto = this.autosRepo.create({
+      ...datos,
+      vendedorId,
+      activo:           true,
+      iaEstado:         analisis.estado,
+      iaPuntaje:        analisis.puntaje,
+      iaDanios:         analisis.danios,
+      iaRangoPrecioMin: analisis.rangoPrecioMin,
+      iaRangoPrecioMax: analisis.rangoPrecioMax,
+      iaResumen:        analisis.resumen,
+      iaAprobado:       true,
+    });
     return this.autosRepo.save(auto);
   }
 
-  // ── Listar con filtros y paginación ───────────────────────
+  // ── Listar con filtros y paginación (solo aprobados) ──────
   async listar(filtros: FiltrosAutoDto) {
     const pagina = filtros.pagina || 1;
     const limite = filtros.limite || 9;
-    const skip = (pagina - 1) * limite;
+    const skip   = (pagina - 1) * limite;
 
     const qb = this.autosRepo
       .createQueryBuilder('a')
       .leftJoinAndSelect('a.imagenes', 'img')
-      .where('a.activo = true') // solo autos aprobados por IA
+      .where('a.activo = true')
       .orderBy('img.orden', 'ASC');
 
-    if (filtros.marca) qb.andWhere('LOWER(a.marca) LIKE :marca', { marca: `%${filtros.marca.toLowerCase()}%` });
-    if (filtros.modelo) qb.andWhere('LOWER(a.modelo) LIKE :modelo', { modelo: `%${filtros.modelo.toLowerCase()}%` });
-    if (filtros.ubicacion) qb.andWhere('LOWER(a.ubicacion) LIKE :ubi', { ubi: `%${filtros.ubicacion.toLowerCase()}%` });
-    if (filtros.precioMin) qb.andWhere('a.precio >= :pMin', { pMin: filtros.precioMin });
-    if (filtros.precioMax) qb.andWhere('a.precio <= :pMax', { pMax: filtros.precioMax });
-    if (filtros.anioMin) qb.andWhere('a.anio >= :aMin', { aMin: filtros.anioMin });
-    if (filtros.anioMax) qb.andWhere('a.anio <= :aMax', { aMax: filtros.anioMax });
-    if (filtros.combustible) qb.andWhere('a.combustible = :comb', { comb: filtros.combustible });
-    if (filtros.transmision) qb.andWhere('a.transmision = :trans', { trans: filtros.transmision });
+    if (filtros.marca)       qb.andWhere('LOWER(a.marca) LIKE :marca',   { marca:   `%${filtros.marca.toLowerCase()}%` });
+    if (filtros.modelo)      qb.andWhere('LOWER(a.modelo) LIKE :modelo', { modelo:  `%${filtros.modelo.toLowerCase()}%` });
+    if (filtros.ubicacion)   qb.andWhere('LOWER(a.ubicacion) LIKE :ubi', { ubi:     `%${filtros.ubicacion.toLowerCase()}%` });
+    if (filtros.precioMin)   qb.andWhere('a.precio >= :pMin',            { pMin:    filtros.precioMin });
+    if (filtros.precioMax)   qb.andWhere('a.precio <= :pMax',            { pMax:    filtros.precioMax });
+    if (filtros.anioMin)     qb.andWhere('a.anio >= :aMin',              { aMin:    filtros.anioMin });
+    if (filtros.anioMax)     qb.andWhere('a.anio <= :aMax',              { aMax:    filtros.anioMax });
+    if (filtros.combustible) qb.andWhere('a.combustible = :comb',        { comb:    filtros.combustible });
+    if (filtros.transmision) qb.andWhere('a.transmision = :trans',       { trans:   filtros.transmision });
 
     switch (filtros.orden) {
-      case 'precio_asc':  qb.addOrderBy('a.precio', 'ASC'); break;
+      case 'precio_asc':  qb.addOrderBy('a.precio', 'ASC');  break;
       case 'precio_desc': qb.addOrderBy('a.precio', 'DESC'); break;
       case 'km_asc':      qb.addOrderBy('a.kilometraje', 'ASC'); break;
       default:            qb.addOrderBy('a.createdAt', 'DESC');
@@ -61,7 +76,7 @@ export class CarsService {
     return { datos, total, pagina, limite, totalPaginas: Math.ceil(total / limite) };
   }
 
-  // ── Obtener detalle de un auto ─────────────────────────────
+  // ── Obtener detalle ────────────────────────────────────────
   async obtenerPorId(id: string): Promise<Auto> {
     const auto = await this.autosRepo.findOne({
       where: { id },
@@ -72,7 +87,7 @@ export class CarsService {
     return auto;
   }
 
-  // ── Autos propios del vendedor (activos e inactivos) ───────
+  // ── Autos del vendedor (todos, activos e inactivos) ────────
   async obtenerPorVendedor(vendedorId: string): Promise<Auto[]> {
     return this.autosRepo.find({
       where: { vendedorId },
@@ -122,31 +137,6 @@ export class CarsService {
     return this.imagenesRepo.save(entidades);
   }
 
-  // ── Guardar análisis IA y activar/desactivar publicación ───
-  async guardarAnalisisIA(id: string, analisis: {
-    estado: string;
-    puntaje: number;
-    danios: string;
-    rangoPrecioMin: number;
-    rangoPrecioMax: number;
-    resumen: string;
-    aprobado: boolean;
-  }): Promise<Auto> {
-    const auto = await this.autosRepo.findOneBy({ id });
-    if (!auto) throw new NotFoundException('Auto no encontrado');
-
-    auto.iaEstado         = analisis.estado;
-    auto.iaPuntaje        = analisis.puntaje;
-    auto.iaDanios         = analisis.danios;
-    auto.iaRangoPrecioMin = analisis.rangoPrecioMin;
-    auto.iaRangoPrecioMax = analisis.rangoPrecioMax;
-    auto.iaResumen        = analisis.resumen;
-    auto.iaAprobado       = analisis.aprobado;
-    auto.activo           = analisis.aprobado; // solo se publica si la IA aprueba
-
-    return this.autosRepo.save(auto);
-  }
-
   // ── Eliminar imagen individual ─────────────────────────────
   async eliminarImagen(imagenId: string, vendedorId: string): Promise<void> {
     const imagen = await this.imagenesRepo.findOne({
@@ -180,33 +170,12 @@ export class CarsService {
     return this.imagenesRepo.save(imagenes);
   }
 
-  // ── Soft delete (vendedor elimina su publicación) ──────────
+  // ── Soft delete (vendedor elimina su publicación aprobada) ─
   async eliminar(id: string, vendedorId: string): Promise<void> {
     const auto = await this.verificarPropietario(id, vendedorId);
     await this.storageService.eliminarCarpetaAuto(id);
     auto.activo = false;
     await this.autosRepo.save(auto);
-  }
-
-  // ── Hard delete: borrar completamente de la DB + bucket ────
-  // Usado cuando la IA rechaza la publicación
-  async eliminarCompleto(id: string): Promise<void> {
-    const auto = await this.autosRepo.findOne({
-      where: { id },
-      relations: ['imagenes'],
-    });
-    if (!auto) return;
-
-    // 1. Eliminar imágenes del bucket de Supabase
-    await this.storageService.eliminarCarpetaAuto(id);
-
-    // 2. Eliminar registros de imagenes_auto
-    if (auto.imagenes?.length) {
-      await this.imagenesRepo.remove(auto.imagenes);
-    }
-
-    // 3. Eliminar el auto de la DB (hard delete real)
-    await this.autosRepo.remove(auto);
   }
 
   // ── Verificar propietario ──────────────────────────────────

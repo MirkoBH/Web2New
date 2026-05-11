@@ -19,7 +19,6 @@ import { FilesInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
 import { IsArray, IsUUID } from 'class-validator';
 import { CarsService } from './cars.service';
-import { CrearAutoDto } from './dto/crear-auto.dto';
 import { ActualizarAutoDto } from './dto/actualizar-auto.dto';
 import { FiltrosAutoDto } from './dto/filtros-auto.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
@@ -27,6 +26,7 @@ import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { UsuarioActual } from '../common/decorators/usuario-actual.decorator';
 import { IaService } from '../ia/ia.service';
+import { TipoCombustible, TipoTransmision } from './auto.entity';
 
 class ReordenarImagenesDto {
   @IsArray()
@@ -51,13 +51,13 @@ export class CarsController {
     private readonly iaService: IaService,
   ) {}
 
-  // GET /api/cars — listado público (solo autos aprobados por IA)
+  // GET /api/cars — listado público (solo aprobados)
   @Get()
   listar(@Query() filtros: FiltrosAutoDto) {
     return this.carsService.listar(filtros);
   }
 
-  // GET /api/cars/mis-autos — todos los autos del vendedor (incluye pendientes)
+  // GET /api/cars/mis-autos — autos del vendedor autenticado
   @Get('mis-autos')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('vendedor')
@@ -71,12 +71,73 @@ export class CarsController {
     return this.carsService.obtenerPorId(id);
   }
 
-  // POST /api/cars — crear publicación (queda inactiva hasta aprobación IA)
-  @Post()
+  // ─────────────────────────────────────────────────────────────
+  // POST /api/cars/publicar
+  // Endpoint unificado: recibe datos + imágenes en un solo request
+  // Flujo:
+  //   1. IA analiza los buffers en memoria (sin tocar DB ni Storage)
+  //   2. Si rechaza → error 400, nada queda guardado
+  //   3. Si aprueba → guarda auto en DB + sube imágenes al bucket
+  // ─────────────────────────────────────────────────────────────
+  @Post('publicar')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('vendedor')
-  crear(@UsuarioActual() usuario: any, @Body() dto: CrearAutoDto) {
-    return this.carsService.crear(usuario.sub, dto);
+  @UseInterceptors(
+    FilesInterceptor('imagenes', 10, {
+      storage: memoryStorage(),
+      fileFilter: filtroImagenes,
+      limits: { fileSize: 8 * 1024 * 1024 },
+    }),
+  )
+  async publicar(
+    @UsuarioActual() usuario: any,
+    @UploadedFiles() archivos: Express.Multer.File[],
+    @Body() body: any,
+  ) {
+    if (!archivos || archivos.length === 0) {
+      throw new BadRequestException('Debés subir al menos una imagen.');
+    }
+
+    const datoAuto = {
+      marca:          String(body.marca || '').trim(),
+      modelo:         String(body.modelo || '').trim(),
+      color:          String(body.color || '').trim(),
+      anio:           Number(body.anio),
+      kilometraje:    Number(body.kilometraje),
+      transmision:    body.transmision as TipoTransmision,
+      combustible:    body.combustible as TipoCombustible,
+      precio:         Number(body.precio),
+      ubicacion:      String(body.ubicacion || '').trim(),
+      descripcion:    String(body.descripcion || '').trim(),
+      detallesDanios: String(body.detallesDanios || '').trim(),
+    };
+
+    // ── 1. IA analiza buffers en memoria — sin tocar DB ────────
+    this.logger.log(`Analizando con IA antes de guardar: ${datoAuto.marca} ${datoAuto.modelo}`);
+    const analisis = await this.iaService.analizarConImagenes(datoAuto, archivos);
+
+    // ── 2. IA rechazó → error, nada queda guardado ─────────────
+    if (!analisis.aprobado) {
+      this.logger.warn(`IA rechazó: ${datoAuto.marca} ${datoAuto.modelo} — ${analisis.resumen}`);
+      throw new BadRequestException({
+        rechazado: true,
+        puntaje:   analisis.puntaje,
+        danios:    analisis.danios,
+        motivo:    analisis.resumen,
+        message:   `Publicación rechazada. ${analisis.resumen}`,
+      });
+    }
+
+    // ── 3. IA aprobó → guardar auto en DB ──────────────────────
+    this.logger.log(`IA aprobó. Guardando en DB...`);
+    const auto = await this.carsService.crearAprobado(usuario.sub, datoAuto, analisis);
+
+    // ── 4. Subir imágenes al bucket de Supabase ─────────────────
+    this.logger.log(`Subiendo ${archivos.length} imagen(es) al bucket...`);
+    await this.carsService.subirImagenes(auto.id, usuario.sub, archivos);
+
+    // ── 5. Devolver auto completo con imágenes ──────────────────
+    return this.carsService.obtenerPorId(auto.id);
   }
 
   // PATCH /api/cars/:id — editar datos
@@ -89,62 +150,6 @@ export class CarsController {
     @Body() dto: ActualizarAutoDto,
   ) {
     return this.carsService.actualizar(id, usuario.sub, dto);
-  }
-
-  // POST /api/cars/:id/upload-images — subir imágenes al bucket
-  @Post(':id/upload-images')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('vendedor')
-  @UseInterceptors(
-    FilesInterceptor('imagenes', 10, {
-      storage: memoryStorage(),
-      fileFilter: filtroImagenes,
-      limits: { fileSize: 8 * 1024 * 1024 },
-    }),
-  )
-  subirImagenes(
-    @Param('id', ParseUUIDPipe) id: string,
-    @UsuarioActual() usuario: any,
-    @UploadedFiles() archivos: Express.Multer.File[],
-  ) {
-    return this.carsService.subirImagenes(id, usuario.sub, archivos);
-  }
-
-  // POST /api/cars/:id/analizar-ia — analizar con IA
-  // Si la IA aprueba → activo: true y se publica
-  // Si la IA rechaza → hard delete completo (DB + bucket)
-  @Post(':id/analizar-ia')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('vendedor')
-  async analizarIA(
-    @Param('id', ParseUUIDPipe) id: string,
-    @UsuarioActual() usuario: any,
-  ) {
-    const auto = await this.carsService.obtenerPorId(id);
-
-    if (auto.vendedorId !== usuario.sub) {
-      throw new ForbiddenException('No tenés permiso para analizar esta publicación');
-    }
-
-    const analisis = await this.iaService.analizarAuto(auto);
-
-    if (!analisis.aprobado) {
-      // ── RECHAZADO: eliminar todo de DB y bucket ─────────────
-      this.logger.warn(`IA rechazó publicación ${id} — eliminando de DB y Storage`);
-      await this.carsService.eliminarCompleto(id);
-
-      // Lanzar error con el motivo del rechazo para que el frontend lo muestre
-      throw new BadRequestException({
-        rechazado: true,
-        motivo: analisis.resumen,
-        danios: analisis.danios,
-        puntaje: analisis.puntaje,
-        message: `Publicación rechazada por la IA. ${analisis.resumen}`,
-      });
-    }
-
-    // ── APROBADO: guardar análisis y activar la publicación ───
-    return this.carsService.guardarAnalisisIA(id, analisis);
   }
 
   // DELETE /api/cars/:id/imagenes/:imagenId — eliminar imagen
