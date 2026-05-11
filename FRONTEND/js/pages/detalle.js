@@ -46,12 +46,12 @@ if (!idAuto) {
           <section class="glass-panel p-3">
             <img id="img-principal" src="${imagenes[0] || "https://via.placeholder.com/800x400?text=Sin+imagen"}"
               alt="${auto.marca} ${auto.modelo}" class="w-100 rounded mb-3"
-              style="max-height:420px;object-fit:cover;" />
+              style="max-height:clamp(220px,45vw,420px);object-fit:cover;width:100%" />
             <div class="row g-2">
               ${imagenes.map((url, i) => `
                 <div class="col-4">
                   <img src="${url}" class="w-100 rounded miniatura-auto"
-                    style="height:95px;object-fit:cover;cursor:pointer;opacity:${i === 0 ? 1 : 0.65};transition:opacity 200ms"
+                    style="height:clamp(65px,10vw,95px);object-fit:cover;cursor:pointer;opacity:${i === 0 ? 1 : 0.65};transition:opacity 200ms"
                     data-url="${url}" alt="Foto ${i + 1}" />
                 </div>`).join("")}
             </div>

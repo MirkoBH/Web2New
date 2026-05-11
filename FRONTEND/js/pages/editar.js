@@ -38,7 +38,7 @@ if (!sesion) {
           <div class="row g-2 mb-2">
             ${galeriaActual.map((url, i) => `
               <div class="col-4 col-md-2">
-                <img src="${url}" class="w-100 rounded" style="height:80px;object-fit:cover" alt="Foto ${i+1}" />
+                <img src="${url}" class="w-100 rounded" style="height:clamp(60px,10vw,80px);object-fit:cover" alt="Foto ${i+1}" />
               </div>`).join("")}
           </div>
           <p class="small text-secondary mb-0">

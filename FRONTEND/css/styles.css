@@ -1,74 +1,72 @@
 /* ─────────────────────────────────────────────────────────────
    AutoPulse – Hoja de estilos principal
    Paleta: Dark Mode premium + acento rojo deportivo (#D1001C)
-   Estética: Glassmorphism luxury
+   Responsive: mobile-first, breakpoints Bootstrap (576/768/992/1200)
    ───────────────────────────────────────────────────────────── */
 
 /* ── Variables globales ─────────────────────────────────────── */
 :root {
-  --fondo-principal: #060709;
-  --fondo-suave: #11141a;
-  --superficie-vidrio: rgba(20, 24, 32, 0.55);
-  --superficie-fuerte: rgba(10, 10, 12, 0.82);
-  --texto-principal: #f5f7fb;
-  --texto-suave: #a9b1bd;
-  --acento-rojo: #d1001c;
-  --acento-rojo-claro: #f13a54;
-  --borde-vidrio: rgba(255, 255, 255, 0.12);
+  --fondo-principal:    #060709;
+  --fondo-suave:        #11141a;
+  --superficie-vidrio:  rgba(20, 24, 32, 0.55);
+  --superficie-fuerte:  rgba(10, 10, 12, 0.82);
+  --texto-principal:    #f5f7fb;
+  --texto-suave:        #a9b1bd;
+  --acento-rojo:        #d1001c;
+  --acento-rojo-claro:  #f13a54;
+  --borde-vidrio:       rgba(255, 255, 255, 0.12);
   --borde-vidrio-hover: rgba(255, 255, 255, 0.22);
-  --sombra-tarjeta: 0 8px 32px rgba(0, 0, 0, 0.45);
-  --transicion: 200ms ease;
-  --radio-panel: 1rem;
-  --radio-tarjeta: 0.875rem;
+  --sombra-tarjeta:     0 8px 32px rgba(0, 0, 0, 0.45);
+  --transicion:         200ms ease;
+  --radio-panel:        1rem;
+  --radio-tarjeta:      0.875rem;
 }
 
 /* ── Reset y base ───────────────────────────────────────────── */
 *,
 *::before,
-*::after {
-  box-sizing: border-box;
-}
+*::after { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
 
 body {
   margin: 0;
   font-family: "Poppins", "Segoe UI", sans-serif;
+  font-size: 16px;
   color: var(--texto-principal);
   background:
     radial-gradient(circle at 8% 15%, rgba(209, 0, 28, 0.18), transparent 34%),
     radial-gradient(circle at 88% 78%, rgba(209, 0, 28, 0.14), transparent 32%),
     linear-gradient(145deg, #040507 0%, #090b0f 45%, #09090c 100%);
+  background-attachment: fixed;
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
 }
 
+img { max-width: 100%; }
+
 /* ── Estructura de página ───────────────────────────────────── */
+.page-shell,
 .contenedor-pagina {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
 }
 
-/* Alias para compatibilidad con HTML existente */
-.page-shell {
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-}
-
-main {
-  flex: 1;
-}
+main { flex: 1; }
 
 /* ── Navegación ─────────────────────────────────────────────── */
 .nav-glass {
-  background: rgba(6, 7, 9, 0.72);
+  background: rgba(6, 7, 9, 0.88);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border-bottom: 1px solid var(--borde-vidrio);
+  z-index: 1030;
 }
 
 .navbar-brand {
-  font-size: 1.35rem;
+  font-size: clamp(1.1rem, 3vw, 1.35rem);
   letter-spacing: -0.5px;
   background: linear-gradient(90deg, #fff 60%, var(--acento-rojo-claro));
   -webkit-background-clip: text;
@@ -82,8 +80,35 @@ main {
   font-size: 0.9rem;
 }
 
-.nav-link:hover {
-  color: var(--texto-principal) !important;
+.nav-link:hover { color: var(--texto-principal) !important; }
+
+/* Menú colapsado en mobile — fondo oscuro */
+.navbar-collapse {
+  background: rgba(6, 7, 9, 0.95);
+}
+
+@media (min-width: 992px) {
+  .navbar-collapse { background: transparent; }
+}
+
+/* Botones del navbar en mobile — ancho completo */
+#nav-auth-zone {
+  flex-wrap: wrap;
+}
+
+@media (max-width: 991.98px) {
+  #nav-auth-zone {
+    padding: 0.75rem 0;
+    gap: 0.5rem !important;
+  }
+  #nav-auth-zone .btn {
+    flex: 1 1 auto;
+    text-align: center;
+  }
+  #btn-cambiar-modo {
+    order: -1;
+    width: 100%;
+  }
 }
 
 /* ── Footer ─────────────────────────────────────────────────── */
@@ -104,60 +129,73 @@ main {
   transition: border-color var(--transicion);
 }
 
-.glass-panel:hover {
-  border-color: var(--borde-vidrio-hover);
-}
+.glass-panel:hover { border-color: var(--borde-vidrio-hover); }
 
-/* ── Sección Hero ───────────────────────────────────────────── */
+/* ── Hero ───────────────────────────────────────────────────── */
 .hero {
   border: 1px solid var(--borde-vidrio);
   border-radius: 1.5rem;
   overflow: hidden;
   position: relative;
   background: var(--superficie-fuerte);
-  min-height: 420px;
 }
 
+/* Overlay de gradiente sobre toda la sección */
 .hero::before {
   content: "";
   position: absolute;
   inset: 0;
   background: linear-gradient(120deg, rgba(4, 5, 8, 0.92) 40%, rgba(209, 0, 28, 0.1));
   z-index: 1;
+  pointer-events: none;
 }
 
+.hero-content,
 .hero-contenido {
   position: relative;
   z-index: 2;
 }
 
-/* Alias para compatibilidad con HTML existente */
-.hero-content {
-  position: relative;
-  z-index: 2;
-}
-
-.hero-imagen,
-.hero-image {
+/* Imagen del hero */
+.hero-image,
+.hero-imagen {
   width: 100%;
   height: 100%;
-  min-height: 420px;
+  min-height: 260px;
   object-fit: cover;
   object-position: center;
   display: block;
   opacity: 0.85;
 }
 
-.hero-subtitulo {
-  color: var(--texto-suave);
-  font-size: 0.95rem;
-  line-height: 1.7;
+/* En mobile la imagen va debajo del texto */
+@media (max-width: 991.98px) {
+  .hero > .row,
+  .hero > div > .row { flex-direction: column; }
+
+  .hero-image,
+  .hero-imagen {
+    min-height: 220px;
+    max-height: 280px;
+    width: 100%;
+    order: -1; /* imagen arriba en mobile */
+  }
+
+  /* El overlay cubre solo la imagen en mobile */
+  .hero::before {
+    background: linear-gradient(180deg, rgba(4,5,8,0.3) 0%, rgba(4,5,8,0.95) 100%);
+  }
 }
 
-/* ── Titulos de sección ─────────────────────────────────────── */
+@media (min-width: 992px) {
+  .hero-image,
+  .hero-imagen { min-height: 420px; }
+}
+
+/* ── Títulos de sección ─────────────────────────────────────── */
 .titulo-seccion,
 .section-title {
-  font-size: clamp(1.3rem, 2vw + 0.8rem, 2.2rem);
+  font-size: clamp(1.2rem, 2vw + 0.6rem, 2rem);
   font-weight: 600;
   letter-spacing: -0.3px;
 }
@@ -166,9 +204,19 @@ main {
 .cuadricula-autos,
 .cars-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
-  gap: 1.25rem;
+  grid-template-columns: 1fr;           /* mobile: 1 columna */
+  gap: 1rem;
   align-items: stretch;
+}
+
+@media (min-width: 576px) {
+  .cuadricula-autos,
+  .cars-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (min-width: 992px) {
+  .cuadricula-autos,
+  .cars-grid { grid-template-columns: repeat(3, 1fr); }
 }
 
 /* ── Tarjeta de auto ────────────────────────────────────────── */
@@ -182,11 +230,15 @@ main {
   width: 100%;
 }
 
-.tarjeta-auto:hover,
-.car-card:hover {
-  transform: translateY(-5px);
-  box-shadow: var(--sombra-tarjeta);
-  border-color: rgba(209, 0, 28, 0.3) !important;
+@media (hover: hover) {
+  .tarjeta-auto:hover,
+  .car-card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--sombra-tarjeta);
+    border-color: rgba(209, 0, 28, 0.3) !important;
+  }
+  .tarjeta-auto:hover .imagen-auto,
+  .car-card:hover .car-cover { opacity: 0.9; }
 }
 
 .tarjeta-auto .card-title,
@@ -205,28 +257,12 @@ main {
   transition: opacity var(--transicion);
 }
 
-/* Tarjeta: altura uniforme con botones siempre al fondo */
+/* Card body: botones siempre al fondo */
 .car-card .card-body {
   display: flex;
   flex-direction: column;
-  min-height: 220px;
-}
-
-.car-card .card-body .btn-row {
-  margin-top: auto;
-}
-
-.tarjeta-auto:hover .imagen-auto,
-.car-card:hover .car-cover {
-  opacity: 0.9;
-}
-
-/* Badge de estado IA */
-.badge-estado {
-  font-size: 0.7rem;
-  padding: 0.3em 0.6em;
-  border-radius: 0.4rem;
-  font-weight: 500;
+  min-height: 200px;
+  padding: 1rem;
 }
 
 /* ── Formularios ────────────────────────────────────────────── */
@@ -239,9 +275,7 @@ main {
   color: var(--texto-principal);
 }
 
-.form-control::placeholder {
-  color: var(--texto-suave);
-}
+.form-control::placeholder { color: var(--texto-suave); }
 
 .form-control:focus,
 .form-select:focus {
@@ -308,18 +342,28 @@ main {
   font-weight: 400;
 }
 
-/* ── Filtro lateral ─────────────────────────────────────────── */
+/* ── Filtros del listado ─────────────────────────────────────── */
 .filtro-fijo,
 .filter-sticky {
   position: sticky;
-  top: 80px;
-  max-height: calc(100vh - 100px);
+  top: 72px;
+  max-height: calc(100vh - 90px);
   overflow-y: auto;
   scrollbar-width: thin;
   scrollbar-color: rgba(255,255,255,0.1) transparent;
 }
 
-/* ── Acordeón FAQ ────────────────────────────────────────────── */
+/* En mobile el filtro no es sticky */
+@media (max-width: 991.98px) {
+  .filtro-fijo,
+  .filter-sticky {
+    position: static;
+    max-height: none;
+    top: auto;
+  }
+}
+
+/* ── Acordeón / FAQ ──────────────────────────────────────────── */
 .item-faq,
 .faq-item {
   background: rgba(255, 255, 255, 0.025);
@@ -329,6 +373,8 @@ main {
 }
 
 .accordion-button {
+  background: transparent !important;
+  color: var(--texto-principal) !important;
   font-size: 0.9rem;
   font-weight: 500;
 }
@@ -342,20 +388,35 @@ main {
   filter: invert(1) brightness(0.6);
 }
 
-/* ── Tarjeta de autenticación ───────────────────────────────── */
+.accordion-body {
+  background: transparent;
+}
+
+/* ── Auth ───────────────────────────────────────────────────── */
 .tarjeta-auth,
 .auth-card {
   max-width: 520px;
+  width: 100%;
   margin: 0 auto;
 }
 
-/* ── Perfil de vendedor ─────────────────────────────────────── */
+/* ── Panel de perfil ─────────────────────────────────────────── */
 .cuadricula-perfil,
 .perfil-cars-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 1.25rem;
+  grid-template-columns: 1fr;
+  gap: 1rem;
   align-items: start;
+}
+
+@media (min-width: 576px) {
+  .cuadricula-perfil,
+  .perfil-cars-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (min-width: 1200px) {
+  .cuadricula-perfil,
+  .perfil-cars-grid { grid-template-columns: repeat(3, 1fr); }
 }
 
 .item-auto-perfil,
@@ -363,16 +424,6 @@ main {
   display: flex;
   flex-direction: column;
   gap: 0.55rem;
-}
-
-.item-auto-perfil .tarjeta-auto,
-.perfil-car-item .car-card {
-  width: 100%;
-}
-
-.item-auto-perfil .tarjeta-auto:hover,
-.perfil-car-item .car-card:hover {
-  transform: none;
 }
 
 .acciones-perfil,
@@ -385,25 +436,20 @@ main {
 .acciones-perfil .btn,
 .perfil-actions .btn {
   flex: 1 1 120px;
+  min-width: 0;
 }
 
-.seccion-consultas,
-.perfil-questions-section {
-  position: relative;
-  z-index: 0;
-}
-
+/* ── Consultas ───────────────────────────────────────────────── */
 .item-consulta,
 .perfil-question-item {
   background: rgba(255, 255, 255, 0.035);
   border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 0.6rem;
+  padding: 1rem;
 }
 
-/* ── Tabla comparadora ──────────────────────────────────────── */
-.table-dark {
-  --bs-table-bg: rgba(14, 17, 24, 0.9);
-}
+/* ── Comparador ─────────────────────────────────────────────── */
+.table-dark { --bs-table-bg: rgba(14, 17, 24, 0.9); }
 
 /* ── Paginación ─────────────────────────────────────────────── */
 .page-link {
@@ -425,28 +471,29 @@ main {
   color: #fff;
 }
 
-/* ── Sección de marcas ───────────────────────────────────────── */
+/* ── Marcas ──────────────────────────────────────────────────── */
 .marcas-grid {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.75rem;
+  gap: 0.6rem;
   justify-content: center;
 }
 
 .marca-badge {
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 1rem;
+  gap: 0.4rem;
+  padding: 0.45rem 0.9rem;
   border: 1px solid var(--borde-vidrio);
   border-radius: 2rem;
   background: rgba(255, 255, 255, 0.04);
-  font-size: 0.82rem;
+  font-size: 0.8rem;
   font-weight: 500;
   color: var(--texto-suave);
   cursor: pointer;
   text-decoration: none;
   transition: all var(--transicion);
+  white-space: nowrap;
 }
 
 .marca-badge:hover {
@@ -455,14 +502,14 @@ main {
   color: var(--texto-principal);
 }
 
-/* ── Estadísticas / Contadores ───────────────────────────────── */
+/* ── Estadísticas ────────────────────────────────────────────── */
 .contador-item {
   text-align: center;
-  padding: 1rem;
+  padding: 1rem 0.5rem;
 }
 
 .contador-numero {
-  font-size: 2.5rem;
+  font-size: clamp(1.8rem, 4vw, 2.5rem);
   font-weight: 700;
   color: var(--acento-rojo-claro);
   line-height: 1;
@@ -470,16 +517,17 @@ main {
 }
 
 .contador-etiqueta {
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   color: var(--texto-suave);
   margin-top: 0.25rem;
 }
 
 /* ── Informe IA ──────────────────────────────────────────────── */
 .puntaje-ia {
-  font-size: 2rem;
+  font-size: clamp(1.6rem, 4vw, 2rem);
   font-weight: 700;
   color: var(--acento-rojo-claro);
+  white-space: nowrap;
 }
 
 .barra-puntaje {
@@ -515,24 +563,19 @@ main {
 }
 
 /* ── Animaciones ─────────────────────────────────────────────── */
-.fade-in {
-  animation: aparecerDesdeAbajo 420ms ease forwards;
-}
-
-.fade-in-delay {
-  opacity: 0;
-  animation: aparecerDesdeAbajo 500ms ease 150ms forwards;
+@media (prefers-reduced-motion: no-preference) {
+  .fade-in {
+    animation: aparecerDesdeAbajo 420ms ease forwards;
+  }
+  .fade-in-delay {
+    opacity: 0;
+    animation: aparecerDesdeAbajo 500ms ease 150ms forwards;
+  }
 }
 
 @keyframes aparecerDesdeAbajo {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 /* ── Separador decorativo ─────────────────────────────────────── */
@@ -545,48 +588,58 @@ main {
 }
 
 /* ── Scroll personalizado ─────────────────────────────────────── */
-::-webkit-scrollbar {
-  width: 6px;
-}
-::-webkit-scrollbar-track {
-  background: transparent;
-}
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb {
   background: rgba(255, 255, 255, 0.1);
   border-radius: 3px;
 }
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.2);
-}
+::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.2); }
 
-/* ── Responsive ───────────────────────────────────────────────── */
+/* ── Detalle de auto ─────────────────────────────────────────── */
+/* En mobile las columnas se apilan */
 @media (max-width: 991.98px) {
-  .hero-imagen,
-  .hero-image {
-    height: 280px;
-  }
-
-  .filtro-fijo,
-  .filter-sticky {
-    position: static;
-    top: auto;
-    max-height: none;
-  }
-
-  .acciones-perfil .btn,
-  .perfil-actions .btn {
-    flex: 1 1 100%;
+  #detalle-mount .row.g-4 > .col-lg-7,
+  #detalle-mount .row.g-4 > .col-lg-5 {
+    width: 100%;
   }
 }
 
-@media (max-width: 575.98px) {
-  .cuadricula-autos,
-  .cars-grid {
-    grid-template-columns: 1fr;
+/* ── Listado — layout sidebar + grilla ──────────────────────── */
+@media (max-width: 991.98px) {
+  /* El sidebar de filtros ocupa ancho completo arriba */
+  .col-lg-3.filtro-fijo,
+  .col-lg-3.filter-sticky {
+    margin-bottom: 1.5rem;
   }
+}
 
-  .titulo-seccion,
-  .section-title {
-    font-size: 1.25rem;
+/* ── Publicar — formulario responsive ───────────────────────── */
+#preview-zone img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* ── Galería de detalle en mobile ───────────────────────────── */
+@media (max-width: 575.98px) {
+  .miniatura-auto {
+    height: 70px !important;
+  }
+}
+
+/* ── Utilidades responsive ───────────────────────────────────── */
+.texto-truncado-2 {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+/* Touch: quitar hover en dispositivos táctiles */
+@media (hover: none) {
+  .tarjeta-auto:hover,
+  .car-card:hover {
+    transform: none;
+    box-shadow: none;
   }
 }
