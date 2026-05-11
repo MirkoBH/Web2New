@@ -18,9 +18,7 @@ export class IaService {
   private readonly logger = new Logger(IaService.name);
   private readonly groq: Groq | null;
 
-  // Modelo con visión para análisis de imágenes
   private readonly MODELO_VISION = 'meta-llama/llama-4-scout-17b-16e-instruct';
-  // Modelo de texto como fallback si no hay imágenes
   private readonly MODELO_TEXTO  = 'llama-3.3-70b-versatile';
 
   constructor(private readonly config: ConfigService) {
@@ -39,11 +37,10 @@ export class IaService {
       this.logger.warn('Groq no disponible — usando análisis simulado');
       return this.analisisSimulado(auto);
     }
-
     try {
-      this.logger.log(`Iniciando análisis IA para: ${auto.marca} ${auto.modelo}`);
+      this.logger.log(`Iniciando análisis IA para: ${auto.marca} ${auto.modelo} ${auto.anio}`);
       const resultado = await this.analizarConGroq(auto);
-      this.logger.log(`✅ Análisis completado — ${resultado.estado}, puntaje: ${resultado.puntaje}`);
+      this.logger.log(`✅ Análisis completado — ${resultado.estado} | Puntaje: ${resultado.puntaje} | Precio sugerido: USD ${resultado.rangoPrecioMin}–${resultado.rangoPrecioMax} | Aprobado: ${resultado.aprobado}`);
       return resultado;
     } catch (error) {
       this.logger.error(`❌ Error Groq: ${error?.message}`);
@@ -52,72 +49,97 @@ export class IaService {
   }
 
   private async analizarConGroq(auto: Auto): Promise<ResultadoAnalisisIA> {
-    // Extraer URLs públicas de las imágenes del auto
     const urlsImagenes: string[] = (auto.imagenes || [])
       .sort((a: any, b: any) => (a.orden ?? 0) - (b.orden ?? 0))
       .map((img: any) => img.urlPublica || img)
       .filter((url: string) => typeof url === 'string' && url.startsWith('http'))
-      .slice(0, 4); // máximo 4 imágenes para no superar límites
+      .slice(0, 4);
 
     const tieneImagenes = urlsImagenes.length > 0;
     const modelo = tieneImagenes ? this.MODELO_VISION : this.MODELO_TEXTO;
 
-    this.logger.log(`Usando modelo: ${modelo} | Imágenes: ${urlsImagenes.length}`);
+    this.logger.log(`Modelo: ${modelo} | Imágenes: ${urlsImagenes.length}`);
 
-    // ── Construir el mensaje con o sin imágenes ───────────────
     const contenidoUsuario: any[] = [];
 
-    // Agregar imágenes si las hay
     if (tieneImagenes) {
       for (const url of urlsImagenes) {
-        contenidoUsuario.push({
-          type: 'image_url',
-          image_url: { url },
-        });
+        contenidoUsuario.push({ type: 'image_url', image_url: { url } });
       }
     }
 
-    // Agregar texto con datos del vehículo
     contenidoUsuario.push({
       type: 'text',
-      text: `${tieneImagenes ? 'Analizá las imágenes del vehículo y también los siguientes datos:' : 'Analizá este vehículo:'}
+      text: `Analizá ${tieneImagenes ? 'las imágenes y ' : ''}los datos de este vehículo:
 
-- Marca: ${auto.marca}
-- Modelo: ${auto.modelo}
+DATOS DEL VEHÍCULO:
+- Marca y modelo: ${auto.marca} ${auto.modelo}
 - Año: ${auto.anio}
 - Kilometraje: ${auto.kilometraje} km
 - Combustible: ${auto.combustible}
 - Transmisión: ${auto.transmision}
-- Precio solicitado: USD ${auto.precio}
+- Precio pedido por el vendedor: USD ${auto.precio}
 - Ubicación: ${auto.ubicacion}
-- Descripción del vendedor: ${auto.descripcion}
-- Daños declarados por el vendedor: ${auto.detallesDanios || 'Ninguno'}
+- Descripción del vendedor: "${auto.descripcion}"
+- Daños declarados por el vendedor: "${auto.detallesDanios || 'Ninguno'}"
+${tieneImagenes ? '\nExaminá cada foto buscando: rayones, abolladuras, golpes, óxido, vidrios rotos, deformaciones, pintura en mal estado, o cualquier daño no declarado.' : ''}
 
-${tieneImagenes ? 'Examiná las fotos en busca de daños visibles, rayones, golpes, óxido o inconsistencias con la descripción.' : ''}
-
-Respondé SOLO con el JSON solicitado.`,
+Completá el JSON solicitado.`,
     });
 
     const completion = await this.groq!.chat.completions.create({
       model: modelo,
-      temperature: 0.2,
-      max_tokens: 500,
+      temperature: 0.1,
+      max_tokens: 600,
       response_format: { type: 'json_object' },
       messages: [
         {
           role: 'system',
-          content: `Sos un experto tasador de autos usados del mercado argentino.
-${tieneImagenes ? 'Analizás imágenes de vehículos para detectar daños visibles y estimás su valor de mercado.' : 'Analizás datos de vehículos para estimar su valor de mercado.'}
+          content: `Sos un perito tasador experto en el mercado de autos usados de Argentina con más de 20 años de experiencia.
+Tu tarea es analizar vehículos y devolver una tasación profesional basada en:
+1. El valor real de mercado en Argentina (precios en USD, mercado informal/blue)
+2. El estado físico del vehículo según las imágenes y la descripción
+3. El kilometraje y año del vehículo
+4. Los daños visibles o declarados
 
-Devolvés SIEMPRE un JSON con esta estructura exacta sin texto adicional:
+CRITERIOS DE PRECIO DE MERCADO ARGENTINO (referencias orientativas en USD):
+- Autos compactos (Fiat Argo, VW Polo, Peugeot 208) 2020+: USD 14.000–22.000
+- Sedanes medianos (Toyota Corolla, VW Vento) 2018+: USD 18.000–28.000
+- SUVs compactas (Jeep Renegade, Renault Duster, VW T-Cross) 2019+: USD 20.000–32.000
+- SUVs medianas (Toyota RAV4, VW Tiguan, Jeep Compass) 2018+: USD 30.000–50.000
+- SUVs premium (BMW X3/X5, Mercedes GLC, Audi Q5) 2016+: USD 40.000–80.000
+- Pickups (Ford Ranger, Toyota Hilux) 2018+: USD 30.000–55.000
+- Autos de lujo (BMW Serie 3/5, Mercedes Clase C/E) 2016+: USD 35.000–70.000
+- Autos económicos (VW Gol, Chevrolet Classic) 2015–2018: USD 8.000–14.000
+
+AJUSTE POR KILOMETRAJE:
+- Menos de 30.000 km: +8% sobre precio base
+- 30.001–60.000 km: precio base (sin ajuste)
+- 60.001–100.000 km: -8% sobre precio base
+- 100.001–150.000 km: -18% sobre precio base
+- Más de 150.000 km: -30% sobre precio base
+
+CRITERIOS DE DAÑOS Y APROBACIÓN:
+- Sin daños o daños mínimos (rayón superficial): estado "Excelente" o "Buen estado", aprobado: true
+- Daños leves (golpe menor, rayón profundo): restar 5–10% al precio, aprobado: true
+- Daños moderados (abolladura visible, pintura dañada en panel): restar 15–25% al precio, aprobado: true
+- Daños graves (choque estructural, múltiples paneles dañados, óxido extendido): restar 30–50% al precio, aprobado: false
+- Inconsistencia grave (descripción no coincide con imágenes, posible fraude): aprobado: false
+
+IMPORTANTE: El precio sugerido debe reflejar el VALOR REAL DE MERCADO en Argentina, 
+independientemente del precio pedido por el vendedor. Si el vendedor pide mucho menos 
+o mucho más del valor real, el rangoPrecioMin y rangoPrecioMax deben reflejar el precio 
+justo de mercado, no el precio del vendedor.
+
+Devolvés SIEMPRE este JSON exacto sin texto adicional:
 {
   "estado": "Excelente" | "Buen estado" | "Regular" | "Requiere reparacion",
   "puntaje": número del 1.0 al 10.0,
-  "danios": "descripción de daños visibles en las fotos, o Sin daños detectados",
-  "rangoPrecioMin": número entero en USD según mercado argentino,
-  "rangoPrecioMax": número entero en USD según mercado argentino,
-  "resumen": "resumen de 1-2 oraciones en español argentino",
-  "aprobado": true si el vehículo parece legítimo y en condición aceptable, false si hay inconsistencias graves
+  "danios": "descripción detallada de daños encontrados en las imágenes, o Sin daños detectados",
+  "rangoPrecioMin": precio mínimo justo en USD según mercado argentino real,
+  "rangoPrecioMax": precio máximo justo en USD según mercado argentino real,
+  "resumen": "resumen profesional de 2-3 oraciones en español argentino explicando el estado, el precio sugerido y por qué",
+  "aprobado": true o false según criterios de daños
 }`,
         },
         {
@@ -128,7 +150,7 @@ Devolvés SIEMPRE un JSON con esta estructura exacta sin texto adicional:
     });
 
     const texto = completion.choices[0]?.message?.content?.trim() || '{}';
-    this.logger.log(`Respuesta Groq: ${texto.substring(0, 200)}`);
+    this.logger.log(`Respuesta Groq: ${texto.substring(0, 300)}`);
 
     const parsed = JSON.parse(texto);
 
