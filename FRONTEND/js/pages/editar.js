@@ -3,7 +3,7 @@ import { carsApi } from "../utils/api.js";
 import { requireAuth } from "../utils/auth.js";
 import { formatUsd, qs } from "../utils/dom.js";
 
-const sesion = requireAuth();
+const sesion = requireAuth("vendedor");
 if (!sesion) {
   // redirigido
 } else {
@@ -109,16 +109,7 @@ if (!sesion) {
           setTimeout(() => { window.location.href = `detalle.html?id=${carId}`; }, 2000);
 
         } catch (err) {
-          if (err.puntaje !== undefined) {
-            showAlert(`
-              <strong>❌ Edición rechazada por la IA (puntaje: ${err.puntaje}/10)</strong><br>
-              <strong>Daños detectados:</strong> ${err.danios || "Ver descripción"}<br>
-              <strong>Motivo:</strong> ${err.motivo || err.message}<br>
-              <small class="mt-1 d-block text-secondary">No se realizaron cambios. Revisá la descripción o las imágenes.</small>
-            `);
-          } else {
-            showAlert(err.message || "Error al guardar los cambios.");
-          }
+          showAlert(err.message || "Error al guardar los cambios.");
         } finally {
           btn.disabled = false;
           btn.textContent = "Guardar y re-analizar con IA";

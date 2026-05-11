@@ -135,25 +135,28 @@ AJUSTE POR KILOMETRAJE:
 - 100.001–150.000 km: -18%
 - Más de 150.000 km: -30%
 
-CRITERIOS DE DAÑOS Y APROBACIÓN:
-- Sin daños o mínimos (rayón superficial): aprobado: true, sin descuento
-- Daños leves (golpe menor, rayón profundo): aprobado: true, -5% a -10%
-- Daños moderados (abolladura visible, panel dañado): aprobado: true, -15% a -25%
-- Daños graves (choque estructural, múltiples paneles, óxido extendido): aprobado: false
-- Inconsistencia grave entre descripción e imágenes: aprobado: false
+CRITERIOS DE ESTADO Y PRECIO:
+- Sin daños o mínimos (rayón superficial): estado "Excelente", sin descuento al precio
+- Daños leves (golpe menor, rayón profundo): estado "Buen estado", -5% a -10% al precio
+- Daños moderados (abolladura visible, panel dañado): estado "Regular", -15% a -25%
+- Daños graves (choque estructural, múltiples paneles, óxido extendido): estado "Requiere reparacion", -30% a -50%
+
+TODAS LAS PUBLICACIONES SE APRUEBAN. El campo aprobado siempre es true.
+El estado "Requiere reparacion" no implica rechazo — significa que el auto tiene daños
+graves pero igual puede publicarse con el precio ajustado correspondientemente.
 
 IMPORTANTE: El precio sugerido debe ser el VALOR REAL de mercado en Argentina,
-ignorando el precio pedido por el vendedor.
+ajustado según el estado real del vehículo.
 
 Devolvés SIEMPRE este JSON sin texto adicional:
 {
   "estado": "Excelente" | "Buen estado" | "Regular" | "Requiere reparacion",
   "puntaje": número del 1.0 al 10.0,
-  "danios": "descripción de daños o Sin daños detectados",
-  "rangoPrecioMin": precio mínimo justo en USD,
-  "rangoPrecioMax": precio máximo justo en USD,
-  "resumen": "2-3 oraciones en español argentino explicando estado, precio y motivo",
-  "aprobado": true o false
+  "danios": "descripción detallada de daños visibles o Sin daños detectados",
+  "rangoPrecioMin": precio mínimo justo en USD ajustado por daños,
+  "rangoPrecioMax": precio máximo justo en USD ajustado por daños,
+  "resumen": "2-3 oraciones explicando el estado, los daños detectados y el precio justo",
+  "aprobado": true
 }`,
         },
         {
@@ -193,7 +196,7 @@ Devolvés SIEMPRE este JSON sin texto adicional:
       rangoPrecioMin: Math.round(datos.precio * 0.9),
       rangoPrecioMax: Math.round(datos.precio * 1.08),
       resumen:        `Vehículo ${datos.marca} ${datos.modelo} analizado en modo de simulación.`,
-      aprobado:       puntaje >= 6,
+      aprobado:       true, // siempre se publica
     };
   }
 }

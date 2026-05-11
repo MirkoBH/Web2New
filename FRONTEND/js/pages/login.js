@@ -23,7 +23,7 @@ form.addEventListener("submit", async (evento) => {
     const password = qs("#password").value;
     const { usuario, token } = await authApi.login({ email, password });
     // Sin rol en la sesión
-    writeSession({ userId: usuario.id, nombre: usuario.nombre, email: usuario.email, token });
+    writeSession({ userId: usuario.id, nombre: usuario.nombre, email: usuario.email, token, modo: 'comprador' });
     showAlert("Sesión iniciada. Redirigiendo...", "success");
     setTimeout(() => { window.location.href = "perfil.html"; }, 500);
   } catch (err) {

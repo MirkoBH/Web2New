@@ -104,17 +104,7 @@ export class CarsController {
     this.logger.log(`Analizando con IA: ${datoAuto.marca} ${datoAuto.modelo}`);
     const analisis = await this.iaService.analizarConImagenes(datoAuto, archivos);
 
-    if (!analisis.aprobado) {
-      this.logger.warn(`IA rechazó: ${datoAuto.marca} ${datoAuto.modelo}`);
-      throw new BadRequestException({
-        rechazado: true,
-        puntaje:   analisis.puntaje,
-        danios:    analisis.danios,
-        motivo:    analisis.resumen,
-        message:   `Publicación rechazada. ${analisis.resumen}`,
-      });
-    }
-
+    // La IA siempre aprueba — el estado refleja la condición real del auto
     const auto = await this.carsService.crearAprobado(usuario.sub, datoAuto, analisis);
     await this.carsService.subirImagenes(auto.id, usuario.sub, archivos);
     return this.carsService.obtenerPorId(auto.id);
@@ -162,17 +152,7 @@ export class CarsController {
     this.logger.log(`Re-analizando con IA: ${datoAuto.marca} ${datoAuto.modelo}`);
     const analisis = await this.iaService.analizarConImagenes(datoAuto, imagenesParaIA);
 
-    if (!analisis.aprobado) {
-      this.logger.warn(`IA rechazó la edición de ${id}`);
-      throw new BadRequestException({
-        rechazado: true,
-        puntaje:   analisis.puntaje,
-        danios:    analisis.danios,
-        motivo:    analisis.resumen,
-        message:   `Edición rechazada por la IA. ${analisis.resumen}`,
-      });
-    }
-
+    // La IA siempre aprueba — actualizar con el nuevo análisis
     // Actualizar datos del auto
     await this.carsService.actualizar(id, usuario.sub, {
       precio:         datoAuto.precio,

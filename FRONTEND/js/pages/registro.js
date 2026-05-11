@@ -35,7 +35,7 @@ form.addEventListener("submit", async (evento) => {
 
     // Sin campo role — todos los usuarios son iguales
     const { usuario, token } = await authApi.registrar({ nombre, email, telefono, password });
-    writeSession({ userId: usuario.id, nombre: usuario.nombre, email: usuario.email, token });
+    writeSession({ userId: usuario.id, nombre: usuario.nombre, email: usuario.email, token, modo: 'comprador' });
     showAlert("¡Cuenta creada correctamente!", "success");
     setTimeout(() => { window.location.href = "perfil.html"; }, 500);
   } catch (err) {

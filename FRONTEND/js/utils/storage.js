@@ -1,7 +1,7 @@
 // ─────────────────────────────────────────────────────────────
 // AutoPulse – Utilidades de almacenamiento local
-// La sesión guarda: userId, nombre, role, email, token (JWT)
-// El resto (COMPARE, WISHLIST) sigue en localStorage
+// Sesión: { userId, nombre, email, token, modo }
+// modo: "comprador" | "vendedor" (se puede cambiar en navbar)
 // ─────────────────────────────────────────────────────────────
 
 const KEYS = {
@@ -34,6 +34,26 @@ export function writeSession(session) {
     return;
   }
   writeJson(KEYS.SESSION, session);
+}
+
+// ── Modo activo del usuario ───────────────────────────────────
+export function getModo() {
+  const session = readSession();
+  return session?.modo || "comprador"; // por defecto comprador
+}
+
+export function setModo(modo) {
+  const session = readSession();
+  if (!session) return;
+  writeSession({ ...session, modo });
+}
+
+export function esVendedor() {
+  return getModo() === "vendedor";
+}
+
+export function esComprador() {
+  return getModo() === "comprador";
 }
 
 export function logout() {
