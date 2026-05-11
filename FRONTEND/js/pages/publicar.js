@@ -126,10 +126,7 @@ if (!sesion) {
       const resultado = await carsApi.analizarIA(autoCreado.id);
 
       // ── 4. Mostrar resultado ──────────────────────────────────
-      if (!resultado.iaAprobado) {
-        showAlert(`La IA rechazó la publicación (puntaje: ${resultado.iaPuntaje}/10). Revisá la descripción e imágenes.`);
-        return;
-      }
+      // Si llegamos aquí, la IA aprobó (si rechaza, el backend lanza un error)
 
       showAlert(`✓ Publicación aprobada — ${resultado.iaEstado} (puntaje ${resultado.iaPuntaje}/10)`, "success");
       preview.innerHTML = `
@@ -145,7 +142,17 @@ if (!sesion) {
       provinciaSearchable.render({ preserveValue: false });
 
     } catch (err) {
-      showAlert(err.message || "Error al publicar el auto.");
+      if (err.puntaje !== undefined) {
+        // Rechazo por IA — mostrar detalle completo
+        showAlert(`
+          ❌ <strong>Publicación rechazada por la IA (puntaje: ${err.puntaje}/10)</strong><br>
+          <strong>Daños detectados:</strong> ${err.danios || "Ver descripción"}<br>
+          <strong>Motivo:</strong> ${err.motivo || err.message}<br>
+          <small class="text-secondary">La publicación fue eliminada. Podés corregir la descripción o las imágenes y volver a intentarlo.</small>
+        `);
+      } else {
+        showAlert(err.message || "Error al publicar el auto.");
+      }
     } finally {
       btn.disabled = false;
       btn.textContent = "Analizar con IA y publicar";

@@ -1,9 +1,11 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
   ForbiddenException,
   Get,
+  Logger,
   Param,
   ParseUUIDPipe,
   Patch,
@@ -34,24 +36,28 @@ class ReordenarImagenesDto {
 
 const filtroImagenes = (_req: any, file: Express.Multer.File, cb: any) => {
   const permitidos = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
-  const valido = permitidos.includes(file.mimetype);
-  cb(valido ? null : new Error('Solo se permiten imágenes JPEG, PNG o WEBP'), valido);
+  cb(
+    permitidos.includes(file.mimetype) ? null : new Error('Solo se permiten imágenes JPEG, PNG o WEBP'),
+    permitidos.includes(file.mimetype),
+  );
 };
 
 @Controller('cars')
 export class CarsController {
+  private readonly logger = new Logger(CarsController.name);
+
   constructor(
     private readonly carsService: CarsService,
     private readonly iaService: IaService,
   ) {}
 
-  // GET /api/cars — listado público con filtros y paginación
+  // GET /api/cars — listado público (solo autos aprobados por IA)
   @Get()
   listar(@Query() filtros: FiltrosAutoDto) {
     return this.carsService.listar(filtros);
   }
 
-  // GET /api/cars/mis-autos — autos del vendedor autenticado
+  // GET /api/cars/mis-autos — todos los autos del vendedor (incluye pendientes)
   @Get('mis-autos')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('vendedor')
@@ -59,13 +65,13 @@ export class CarsController {
     return this.carsService.obtenerPorVendedor(usuario.sub);
   }
 
-  // GET /api/cars/:id — detalle público con imágenes ordenadas
+  // GET /api/cars/:id — detalle de un auto
   @Get(':id')
   obtener(@Param('id', ParseUUIDPipe) id: string) {
     return this.carsService.obtenerPorId(id);
   }
 
-  // POST /api/cars — crear publicación (solo vendedores)
+  // POST /api/cars — crear publicación (queda inactiva hasta aprobación IA)
   @Post()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('vendedor')
@@ -73,7 +79,7 @@ export class CarsController {
     return this.carsService.crear(usuario.sub, dto);
   }
 
-  // PATCH /api/cars/:id — editar datos del auto
+  // PATCH /api/cars/:id — editar datos
   @Patch(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('vendedor')
@@ -85,8 +91,7 @@ export class CarsController {
     return this.carsService.actualizar(id, usuario.sub, dto);
   }
 
-  // POST /api/cars/:id/upload-images
-  // Sube archivos al bucket de Supabase Storage y los registra en imagenes_auto
+  // POST /api/cars/:id/upload-images — subir imágenes al bucket
   @Post(':id/upload-images')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('vendedor')
@@ -105,7 +110,44 @@ export class CarsController {
     return this.carsService.subirImagenes(id, usuario.sub, archivos);
   }
 
-  // DELETE /api/cars/:id/imagenes/:imagenId — eliminar una imagen
+  // POST /api/cars/:id/analizar-ia — analizar con IA
+  // Si la IA aprueba → activo: true y se publica
+  // Si la IA rechaza → hard delete completo (DB + bucket)
+  @Post(':id/analizar-ia')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('vendedor')
+  async analizarIA(
+    @Param('id', ParseUUIDPipe) id: string,
+    @UsuarioActual() usuario: any,
+  ) {
+    const auto = await this.carsService.obtenerPorId(id);
+
+    if (auto.vendedorId !== usuario.sub) {
+      throw new ForbiddenException('No tenés permiso para analizar esta publicación');
+    }
+
+    const analisis = await this.iaService.analizarAuto(auto);
+
+    if (!analisis.aprobado) {
+      // ── RECHAZADO: eliminar todo de DB y bucket ─────────────
+      this.logger.warn(`IA rechazó publicación ${id} — eliminando de DB y Storage`);
+      await this.carsService.eliminarCompleto(id);
+
+      // Lanzar error con el motivo del rechazo para que el frontend lo muestre
+      throw new BadRequestException({
+        rechazado: true,
+        motivo: analisis.resumen,
+        danios: analisis.danios,
+        puntaje: analisis.puntaje,
+        message: `Publicación rechazada por la IA. ${analisis.resumen}`,
+      });
+    }
+
+    // ── APROBADO: guardar análisis y activar la publicación ───
+    return this.carsService.guardarAnalisisIA(id, analisis);
+  }
+
+  // DELETE /api/cars/:id/imagenes/:imagenId — eliminar imagen
   @Delete(':id/imagenes/:imagenId')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('vendedor')
@@ -129,23 +171,7 @@ export class CarsController {
     return this.carsService.reordenarImagenes(id, usuario.sub, dto.orden);
   }
 
-  // POST /api/cars/:id/analizar-ia — análisis con Gemini
-  @Post(':id/analizar-ia')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('vendedor')
-  async analizarIA(
-    @Param('id', ParseUUIDPipe) id: string,
-    @UsuarioActual() usuario: any,
-  ) {
-    const auto = await this.carsService.obtenerPorId(id);
-    if (auto.vendedorId !== usuario.sub) {
-      throw new ForbiddenException('No tenés permiso para analizar esta publicación');
-    }
-    const analisis = await this.iaService.analizarAuto(auto);
-    return this.carsService.guardarAnalisisIA(id, analisis);
-  }
-
-  // DELETE /api/cars/:id — eliminar publicación + imágenes del bucket
+  // DELETE /api/cars/:id — eliminar publicación propia
   @Delete(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('vendedor')

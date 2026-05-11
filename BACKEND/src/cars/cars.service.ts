@@ -24,7 +24,7 @@ export class CarsService {
 
   // ── Crear publicación ──────────────────────────────────────
   async crear(vendedorId: string, dto: CrearAutoDto): Promise<Auto> {
-    const auto = this.autosRepo.create({ ...dto, vendedorId, activo: true });
+    const auto = this.autosRepo.create({ ...dto, vendedorId, activo: false }); // inactivo hasta aprobar IA
     return this.autosRepo.save(auto);
   }
 
@@ -37,7 +37,7 @@ export class CarsService {
     const qb = this.autosRepo
       .createQueryBuilder('a')
       .leftJoinAndSelect('a.imagenes', 'img')
-      .where('a.activo = true')
+      .where('a.activo = true') // solo autos aprobados por IA
       .orderBy('img.orden', 'ASC');
 
     if (filtros.marca) qb.andWhere('LOWER(a.marca) LIKE :marca', { marca: `%${filtros.marca.toLowerCase()}%` });
@@ -58,14 +58,13 @@ export class CarsService {
     }
 
     const [datos, total] = await qb.skip(skip).take(limite).getManyAndCount();
-
     return { datos, total, pagina, limite, totalPaginas: Math.ceil(total / limite) };
   }
 
   // ── Obtener detalle de un auto ─────────────────────────────
   async obtenerPorId(id: string): Promise<Auto> {
     const auto = await this.autosRepo.findOne({
-      where: { id, activo: true },
+      where: { id },
       relations: ['vendedor', 'imagenes'],
       order: { imagenes: { orden: 'ASC' } } as any,
     });
@@ -73,10 +72,10 @@ export class CarsService {
     return auto;
   }
 
-  // ── Autos propios del vendedor ─────────────────────────────
+  // ── Autos propios del vendedor (activos e inactivos) ───────
   async obtenerPorVendedor(vendedorId: string): Promise<Auto[]> {
     return this.autosRepo.find({
-      where: { vendedorId, activo: true },
+      where: { vendedorId },
       relations: ['imagenes'],
       order: { createdAt: 'DESC' },
     });
@@ -89,19 +88,16 @@ export class CarsService {
     return this.autosRepo.save(auto);
   }
 
-  // ── Subir imágenes: bucket + registro en tabla ─────────────
+  // ── Subir imágenes al bucket + registrar en tabla ──────────
   async subirImagenes(
     autoId: string,
     vendedorId: string,
     archivos: Express.Multer.File[],
   ): Promise<ImagenAuto[]> {
-    // Verificar que el auto pertenece al vendedor
     await this.verificarPropietario(autoId, vendedorId);
 
-    // Determinar el orden de inicio (después de las que ya existen)
     const ordenActual = await this.imagenesRepo.count({ where: { autoId } });
 
-    // Subir cada archivo al bucket en paralelo
     const subidas: ArchivoSubido[] = await Promise.all(
       archivos.map((archivo) =>
         this.storageService.subirImagen(
@@ -113,66 +109,20 @@ export class CarsService {
       ),
     );
 
-    // Registrar cada imagen en la tabla imagenes_auto
     const entidades = subidas.map((subida, i) =>
       this.imagenesRepo.create({
         autoId,
         storagePath: subida.storagePath,
-        urlPublica: subida.urlPublica,
-        nombre: subida.nombre,
-        orden: ordenActual + i,
+        urlPublica:  subida.urlPublica,
+        nombre:      subida.nombre,
+        orden:       ordenActual + i,
       }),
     );
 
     return this.imagenesRepo.save(entidades);
   }
 
-  // ── Eliminar una imagen individual ─────────────────────────
-  async eliminarImagen(imagenId: string, vendedorId: string): Promise<void> {
-    const imagen = await this.imagenesRepo.findOne({
-      where: { id: imagenId },
-      relations: ['auto'],
-    });
-    if (!imagen) throw new NotFoundException('Imagen no encontrada');
-    if (imagen.auto.vendedorId !== vendedorId) {
-      throw new ForbiddenException('No tenés permiso para eliminar esta imagen');
-    }
-
-    // Eliminar del bucket
-    await this.storageService.eliminarImagen(imagen.storagePath);
-    // Eliminar registro de la tabla
-    await this.imagenesRepo.remove(imagen);
-
-    // Reordenar las imágenes restantes del auto
-    const restantes = await this.imagenesRepo.find({
-      where: { autoId: imagen.autoId },
-      order: { orden: 'ASC' },
-    });
-    for (let i = 0; i < restantes.length; i++) {
-      restantes[i].orden = i;
-    }
-    await this.imagenesRepo.save(restantes);
-  }
-
-  // ── Reordenar imágenes de un auto ─────────────────────────
-  async reordenarImagenes(
-    autoId: string,
-    vendedorId: string,
-    orden: string[], // array de IDs de imagen en el nuevo orden deseado
-  ): Promise<ImagenAuto[]> {
-    await this.verificarPropietario(autoId, vendedorId);
-
-    const imagenes = await this.imagenesRepo.find({ where: { autoId } });
-
-    for (const imagen of imagenes) {
-      const nuevoOrden = orden.indexOf(imagen.id);
-      if (nuevoOrden !== -1) imagen.orden = nuevoOrden;
-    }
-
-    return this.imagenesRepo.save(imagenes);
-  }
-
-  // ── Guardar resultado análisis IA ──────────────────────────
+  // ── Guardar análisis IA y activar/desactivar publicación ───
   async guardarAnalisisIA(id: string, analisis: {
     estado: string;
     puntaje: number;
@@ -185,25 +135,78 @@ export class CarsService {
     const auto = await this.autosRepo.findOneBy({ id });
     if (!auto) throw new NotFoundException('Auto no encontrado');
 
-    auto.iaEstado      = analisis.estado;
-    auto.iaPuntaje     = analisis.puntaje;
-    auto.iaDanios      = analisis.danios;
+    auto.iaEstado         = analisis.estado;
+    auto.iaPuntaje        = analisis.puntaje;
+    auto.iaDanios         = analisis.danios;
     auto.iaRangoPrecioMin = analisis.rangoPrecioMin;
     auto.iaRangoPrecioMax = analisis.rangoPrecioMax;
-    auto.iaResumen     = analisis.resumen;
-    auto.iaAprobado    = analisis.aprobado;
+    auto.iaResumen        = analisis.resumen;
+    auto.iaAprobado       = analisis.aprobado;
+    auto.activo           = analisis.aprobado; // solo se publica si la IA aprueba
 
     return this.autosRepo.save(auto);
   }
 
-  // ── Eliminar publicación (soft delete + limpia bucket) ─────
+  // ── Eliminar imagen individual ─────────────────────────────
+  async eliminarImagen(imagenId: string, vendedorId: string): Promise<void> {
+    const imagen = await this.imagenesRepo.findOne({
+      where: { id: imagenId },
+      relations: ['auto'],
+    });
+    if (!imagen) throw new NotFoundException('Imagen no encontrada');
+    if (imagen.auto.vendedorId !== vendedorId) {
+      throw new ForbiddenException('No tenés permiso para eliminar esta imagen');
+    }
+
+    await this.storageService.eliminarImagen(imagen.storagePath);
+    await this.imagenesRepo.remove(imagen);
+
+    const restantes = await this.imagenesRepo.find({
+      where: { autoId: imagen.autoId },
+      order: { orden: 'ASC' },
+    });
+    for (let i = 0; i < restantes.length; i++) restantes[i].orden = i;
+    await this.imagenesRepo.save(restantes);
+  }
+
+  // ── Reordenar imágenes ─────────────────────────────────────
+  async reordenarImagenes(autoId: string, vendedorId: string, orden: string[]): Promise<ImagenAuto[]> {
+    await this.verificarPropietario(autoId, vendedorId);
+    const imagenes = await this.imagenesRepo.find({ where: { autoId } });
+    for (const imagen of imagenes) {
+      const nuevoOrden = orden.indexOf(imagen.id);
+      if (nuevoOrden !== -1) imagen.orden = nuevoOrden;
+    }
+    return this.imagenesRepo.save(imagenes);
+  }
+
+  // ── Soft delete (vendedor elimina su publicación) ──────────
   async eliminar(id: string, vendedorId: string): Promise<void> {
     const auto = await this.verificarPropietario(id, vendedorId);
-    // Eliminar todas las imágenes del bucket del auto
     await this.storageService.eliminarCarpetaAuto(id);
-    // Soft delete
     auto.activo = false;
     await this.autosRepo.save(auto);
+  }
+
+  // ── Hard delete: borrar completamente de la DB + bucket ────
+  // Usado cuando la IA rechaza la publicación
+  async eliminarCompleto(id: string): Promise<void> {
+    const auto = await this.autosRepo.findOne({
+      where: { id },
+      relations: ['imagenes'],
+    });
+    if (!auto) return;
+
+    // 1. Eliminar imágenes del bucket de Supabase
+    await this.storageService.eliminarCarpetaAuto(id);
+
+    // 2. Eliminar registros de imagenes_auto
+    if (auto.imagenes?.length) {
+      await this.imagenesRepo.remove(auto.imagenes);
+    }
+
+    // 3. Eliminar el auto de la DB (hard delete real)
+    await this.autosRepo.remove(auto);
   }
 
   // ── Verificar propietario ──────────────────────────────────

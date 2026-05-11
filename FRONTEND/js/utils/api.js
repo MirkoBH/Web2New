@@ -25,6 +25,14 @@ async function apiFetch(path, options = {}) {
 
   if (!res.ok) {
     const err = await res.json().catch(() => ({ message: "Error desconocido" }));
+    // Si el backend rechazó por IA, incluir el detalle en el mensaje
+    if (err.rechazado) {
+      const error = new Error(err.message || "Publicación rechazada por la IA.");
+      error.danios  = err.danios;
+      error.puntaje = err.puntaje;
+      error.motivo  = err.motivo;
+      throw error;
+    }
     throw new Error(err.message || `Error ${res.status}`);
   }
 
@@ -45,6 +53,14 @@ async function apiFetchMultipart(path, formData) {
 
   if (!res.ok) {
     const err = await res.json().catch(() => ({ message: "Error desconocido" }));
+    // Si el backend rechazó por IA, incluir el detalle en el mensaje
+    if (err.rechazado) {
+      const error = new Error(err.message || "Publicación rechazada por la IA.");
+      error.danios  = err.danios;
+      error.puntaje = err.puntaje;
+      error.motivo  = err.motivo;
+      throw error;
+    }
     throw new Error(err.message || `Error ${res.status}`);
   }
 
