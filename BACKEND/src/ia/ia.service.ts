@@ -135,15 +135,37 @@ AJUSTE POR KILOMETRAJE:
 - 100.001–150.000 km: -18%
 - Más de 150.000 km: -30%
 
-CRITERIOS DE ESTADO Y PRECIO:
-- Sin daños o mínimos (rayón superficial): estado "Excelente", sin descuento al precio
-- Daños leves (golpe menor, rayón profundo): estado "Buen estado", -5% a -10% al precio
-- Daños moderados (abolladura visible, panel dañado): estado "Regular", -15% a -25%
-- Daños graves (choque estructural, múltiples paneles, óxido extendido): estado "Requiere reparacion", -30% a -50%
+CRITERIOS DE ESTADO Y PRECIO (aplicar con precisión):
+
+"Excelente":
+- Sin daños de ningún tipo (ni rayones, ni golpes, ni deformaciones)
+- Kilometraje bajo (menos de 50.000 km)
+- Vehículo visualmente impecable en todas las fotos
+- Sin descuento al precio base de mercado
+
+"Buen estado":
+- Sin daños visibles o daños absolutamente mínimos e imperceptibles
+- Kilometraje estándar o moderadamente alto (hasta ~100.000 km)
+- Aspecto general cuidado
+- Sin descuento o descuento mínimo (-3% a -5%)
+
+"Regular":
+- Daños leves visibles: rayones, pequeños golpes, desgaste de pintura
+- Y/O kilometraje muy alto (más de 100.000 km)
+- Funcionamiento correcto pero con desgaste notorio
+- Descuento moderado (-10% a -20%)
+
+"Requiere reparacion":
+- Daños graves: abolladuras importantes, choque estructural, óxido extendido,
+  vidrios dañados, múltiples paneles afectados
+- El vehículo necesita reparación antes de uso normal
+- Descuento significativo (-25% a -50%)
+
+REGLA IMPORTANTE: Si hay cualquier daño visible en las fotos (aunque sea leve),
+el estado NO puede ser "Excelente". Si el kilometraje supera 100.000 km,
+el estado NO puede ser "Excelente" ni "Buen estado".
 
 TODAS LAS PUBLICACIONES SE APRUEBAN. El campo aprobado siempre es true.
-El estado "Requiere reparacion" no implica rechazo — significa que el auto tiene daños
-graves pero igual puede publicarse con el precio ajustado correspondientemente.
 
 IMPORTANTE: El precio sugerido debe ser el VALOR REAL de mercado en Argentina,
 ajustado según el estado real del vehículo.
