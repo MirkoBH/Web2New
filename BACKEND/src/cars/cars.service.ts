@@ -22,7 +22,7 @@ export class CarsService {
     private readonly storageService: StorageService,
   ) {}
 
-  // ── Crear auto ya aprobado por IA (activo: true desde el inicio) ─
+  // ── Crear auto aprobado por IA ─────────────────────────────
   async crearAprobado(
     vendedorId: string,
     datos: Partial<Auto>,
@@ -43,7 +43,7 @@ export class CarsService {
     return this.autosRepo.save(auto);
   }
 
-  // ── Listar con filtros y paginación (solo aprobados) ──────
+  // ── Listar con filtros y paginación (solo aprobados) ───────
   async listar(filtros: FiltrosAutoDto) {
     const pagina = filtros.pagina || 1;
     const limite = filtros.limite || 9;
@@ -55,20 +55,20 @@ export class CarsService {
       .where('a.activo = true')
       .orderBy('img.orden', 'ASC');
 
-    if (filtros.marca)       qb.andWhere('LOWER(a.marca) LIKE :marca',   { marca:   `%${filtros.marca.toLowerCase()}%` });
-    if (filtros.modelo)      qb.andWhere('LOWER(a.modelo) LIKE :modelo', { modelo:  `%${filtros.modelo.toLowerCase()}%` });
-    if (filtros.ubicacion)   qb.andWhere('LOWER(a.ubicacion) LIKE :ubi', { ubi:     `%${filtros.ubicacion.toLowerCase()}%` });
-    if (filtros.precioMin)   qb.andWhere('a.precio >= :pMin',            { pMin:    filtros.precioMin });
-    if (filtros.precioMax)   qb.andWhere('a.precio <= :pMax',            { pMax:    filtros.precioMax });
-    if (filtros.anioMin)     qb.andWhere('a.anio >= :aMin',              { aMin:    filtros.anioMin });
-    if (filtros.anioMax)     qb.andWhere('a.anio <= :aMax',              { aMax:    filtros.anioMax });
-    if (filtros.combustible) qb.andWhere('a.combustible = :comb',        { comb:    filtros.combustible });
-    if (filtros.transmision) qb.andWhere('a.transmision = :trans',       { trans:   filtros.transmision });
+    if (filtros.marca)       qb.andWhere('LOWER(a.marca) LIKE :marca',   { marca:  `%${filtros.marca.toLowerCase()}%` });
+    if (filtros.modelo)      qb.andWhere('LOWER(a.modelo) LIKE :modelo', { modelo: `%${filtros.modelo.toLowerCase()}%` });
+    if (filtros.ubicacion)   qb.andWhere('LOWER(a.ubicacion) LIKE :ubi', { ubi:    `%${filtros.ubicacion.toLowerCase()}%` });
+    if (filtros.precioMin)   qb.andWhere('a.precio >= :pMin',            { pMin:   filtros.precioMin });
+    if (filtros.precioMax)   qb.andWhere('a.precio <= :pMax',            { pMax:   filtros.precioMax });
+    if (filtros.anioMin)     qb.andWhere('a.anio >= :aMin',              { aMin:   filtros.anioMin });
+    if (filtros.anioMax)     qb.andWhere('a.anio <= :aMax',              { aMax:   filtros.anioMax });
+    if (filtros.combustible) qb.andWhere('a.combustible = :comb',        { comb:   filtros.combustible });
+    if (filtros.transmision) qb.andWhere('a.transmision = :trans',       { trans:  filtros.transmision });
 
     switch (filtros.orden) {
-      case 'precio_asc':  qb.addOrderBy('a.precio', 'ASC');  break;
-      case 'precio_desc': qb.addOrderBy('a.precio', 'DESC'); break;
-      case 'km_asc':      qb.addOrderBy('a.kilometraje', 'ASC'); break;
+      case 'precio_asc':  qb.addOrderBy('a.precio', 'ASC');        break;
+      case 'precio_desc': qb.addOrderBy('a.precio', 'DESC');       break;
+      case 'km_asc':      qb.addOrderBy('a.kilometraje', 'ASC');   break;
       default:            qb.addOrderBy('a.createdAt', 'DESC');
     }
 
@@ -87,16 +87,16 @@ export class CarsService {
     return auto;
   }
 
-  // ── Autos del vendedor (todos, activos e inactivos) ────────
+  // ── Autos del vendedor (solo activos) ──────────────────────
   async obtenerPorVendedor(vendedorId: string): Promise<Auto[]> {
     return this.autosRepo.find({
-      where: { vendedorId },
+      where: { vendedorId, activo: true },
       relations: ['imagenes'],
       order: { createdAt: 'DESC' },
     });
   }
 
-  // ── Actualizar datos del auto ──────────────────────────────
+  // ── Actualizar datos ───────────────────────────────────────
   async actualizar(id: string, vendedorId: string, dto: ActualizarAutoDto): Promise<Auto> {
     const auto = await this.verificarPropietario(id, vendedorId);
     Object.assign(auto, dto);
@@ -147,7 +147,6 @@ export class CarsService {
     if (imagen.auto.vendedorId !== vendedorId) {
       throw new ForbiddenException('No tenés permiso para eliminar esta imagen');
     }
-
     await this.storageService.eliminarImagen(imagen.storagePath);
     await this.imagenesRepo.remove(imagen);
 
@@ -170,12 +169,22 @@ export class CarsService {
     return this.imagenesRepo.save(imagenes);
   }
 
-  // ── Soft delete (vendedor elimina su publicación aprobada) ─
+  // ── Eliminar publicación: hard delete completo ─────────────
+  // Borra el auto, sus imágenes de la tabla y del bucket
   async eliminar(id: string, vendedorId: string): Promise<void> {
     const auto = await this.verificarPropietario(id, vendedorId);
+
+    // 1. Eliminar imágenes del bucket
     await this.storageService.eliminarCarpetaAuto(id);
-    auto.activo = false;
-    await this.autosRepo.save(auto);
+
+    // 2. Eliminar registros de imagenes_auto
+    const imagenes = await this.imagenesRepo.find({ where: { autoId: id } });
+    if (imagenes.length) {
+      await this.imagenesRepo.remove(imagenes);
+    }
+
+    // 3. Hard delete del auto en la DB
+    await this.autosRepo.remove(auto);
   }
 
   // ── Verificar propietario ──────────────────────────────────

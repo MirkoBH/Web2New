@@ -67,11 +67,17 @@ if (!sesion) {
       // Eliminar auto
       grid.querySelectorAll("[data-delete-id]").forEach((btn) => {
         btn.addEventListener("click", async () => {
-          if (!confirm("¿Eliminás esta publicación? Esta acción no se puede deshacer.")) return;
+          if (!confirm("¿Eliminás esta publicación? Esta acción borrará el auto y sus imágenes permanentemente.")) return;
+          btn.disabled = true;
+          btn.textContent = "Eliminando...";
           try {
             await carsApi.eliminar(btn.dataset.deleteId);
             window.location.reload();
-          } catch (err) { alert(err.message); }
+          } catch (err) {
+            alert("Error al eliminar: " + (err.message || "Error desconocido"));
+            btn.disabled = false;
+            btn.textContent = "Eliminar";
+          }
         });
       });
     }).catch(() => {
