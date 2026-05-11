@@ -1,7 +1,7 @@
 import { initAppShell } from "../app-init.js";
 import { carsApi, consultasApi } from "../utils/api.js";
 import { formatKm, formatUsd, qs } from "../utils/dom.js";
-import { readSession, getModo } from "../utils/storage.js";
+import { readSession, getModo, readJson, writeJson, getKey } from "../utils/storage.js";
 
 initAppShell();
 
@@ -159,7 +159,6 @@ if (!idAuto) {
 
     // ── Botón comparar ──────────────────────────────────────
     qs("#btn-comparar")?.addEventListener("click", () => {
-      const { readJson, writeJson, getKey } = await import("../utils/storage.js");
       const comparador = readJson(getKey("COMPARE"), []);
       if (comparador.includes(auto.id)) {
         writeJson(getKey("COMPARE"), comparador.filter((id) => id !== auto.id));
@@ -174,7 +173,6 @@ if (!idAuto) {
 
     // ── Botón favorito ──────────────────────────────────────
     qs("#btn-favorito")?.addEventListener("click", () => {
-      const { readJson, writeJson, getKey } = await import("../utils/storage.js");
       const wishlist = readJson(getKey("WISHLIST"), []);
       const existe   = wishlist.find((x) => x.userId === sesion.userId && x.carId === auto.id);
       if (existe) {
