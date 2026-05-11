@@ -1,5 +1,4 @@
-import { IsEmail, IsEnum, IsOptional, IsString, Matches, MaxLength, MinLength } from 'class-validator';
-import { RolUsuario } from '../usuario.entity';
+import { IsEmail, IsOptional, IsString, Matches, MaxLength, MinLength } from 'class-validator';
 
 export class CrearUsuarioDto {
   @IsString()
@@ -22,7 +21,4 @@ export class CrearUsuarioDto {
     message: 'La contraseña debe tener letras, números y al menos un símbolo',
   })
   password: string;
-
-  @IsEnum(RolUsuario)
-  role: RolUsuario;
 }

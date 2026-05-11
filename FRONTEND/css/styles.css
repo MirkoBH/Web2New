@@ -205,7 +205,19 @@ main {
   height: 195px;
   object-fit: cover;
   width: 100%;
+  flex-shrink: 0;
   transition: opacity var(--transicion);
+}
+
+/* Tarjeta: altura uniforme con botones siempre al fondo */
+.car-card .card-body {
+  display: flex;
+  flex-direction: column;
+  min-height: 220px;
+}
+
+.car-card .card-body .btn-row {
+  margin-top: auto;
 }
 
 .tarjeta-auto:hover .imagen-auto,

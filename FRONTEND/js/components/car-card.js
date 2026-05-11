@@ -38,8 +38,8 @@ export function toggleCompare(idAuto) {
 // ── Alternar auto en favoritos ────────────────────────────────
 export function toggleWishlist(idAuto) {
   const sesion = readSession();
-  if (!sesion || sesion.role !== "comprador") {
-    window.alert("Debés iniciar sesión como comprador para usar favoritos.");
+  if (!sesion) {
+    window.alert("Debés iniciar sesión para usar favoritos.");
     return;
   }
 
@@ -80,7 +80,7 @@ export function carCardTemplate(auto) {
         alt="${escapeHtml(auto.marca)} ${escapeHtml(auto.modelo)}"
         loading="lazy"
       />
-      <div class="card-body d-flex flex-column">
+      <div class="card-body d-flex flex-column" style="min-height:220px">
         <div class="d-flex justify-content-between align-items-start mb-1">
           <h5 class="card-title mb-0">${escapeHtml(auto.marca)} ${escapeHtml(auto.modelo)}</h5>
           <span class="badge ${claseEstadoIA(estadoIA)}" style="font-size:0.65rem">${escapeHtml(estadoIA)}</span>

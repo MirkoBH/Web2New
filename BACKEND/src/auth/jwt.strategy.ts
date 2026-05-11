@@ -10,15 +10,14 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     private readonly config: ConfigService,
     private readonly usersService: UsersService,
   ) {
-    const secretOrKey = config.get<string>('JWT_SECRET_PASSWORD') ?? 'fallback_dev_secret';
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
-      secretOrKey,
+      secretOrKey: config.get<string>('JWT_SECRET_PASSWORD') ?? 'fallback_dev_secret',
     });
   }
 
-  async validate(payload: { sub: string; email: string; role: string }) {
+  async validate(payload: { sub: string; email: string }) {
     const usuario = await this.usersService.buscarPorId(payload.sub);
     if (!usuario) throw new UnauthorizedException('Token inválido');
     return payload;

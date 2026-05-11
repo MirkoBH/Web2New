@@ -13,19 +13,16 @@ export class UsersService {
     private readonly usuariosRepo: Repository<Usuario>,
   ) {}
 
-  // ── Registro de nuevo usuario ──────────────────────────────
   async crear(dto: CrearUsuarioDto): Promise<Omit<Usuario, 'password'>> {
     const existe = await this.usuariosRepo.findOneBy({ email: dto.email.toLowerCase() });
-    if (existe) {
-      throw new ConflictException('El email ya está registrado');
-    }
+    if (existe) throw new ConflictException('El email ya está registrado');
 
     const hash = await bcrypt.hash(dto.password, 12);
     const usuario = this.usuariosRepo.create({
       ...dto,
       email: dto.email.toLowerCase(),
       password: hash,
-      emailVerificado: true, // en MVP se asume verificado al registrarse
+      emailVerificado: true,
     });
 
     const guardado = await this.usuariosRepo.save(usuario);
@@ -33,7 +30,6 @@ export class UsersService {
     return resultado;
   }
 
-  // ── Buscar por email (incluye password para autenticación) ─
   async buscarPorEmailConPassword(email: string): Promise<Usuario | null> {
     return this.usuariosRepo
       .createQueryBuilder('u')
@@ -42,14 +38,12 @@ export class UsersService {
       .getOne();
   }
 
-  // ── Buscar por ID ──────────────────────────────────────────
   async buscarPorId(id: string): Promise<Usuario> {
     const usuario = await this.usuariosRepo.findOneBy({ id });
     if (!usuario) throw new NotFoundException('Usuario no encontrado');
     return usuario;
   }
 
-  // ── Actualizar perfil ──────────────────────────────────────
   async actualizar(id: string, dto: ActualizarUsuarioDto): Promise<Usuario> {
     const usuario = await this.buscarPorId(id);
     Object.assign(usuario, dto);

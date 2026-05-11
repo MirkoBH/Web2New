@@ -6,11 +6,6 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 
-export enum RolUsuario {
-  COMPRADOR = 'comprador',
-  VENDEDOR = 'vendedor',
-}
-
 @Entity('usuarios')
 export class Usuario {
   @PrimaryGeneratedColumn('uuid')
@@ -27,9 +22,6 @@ export class Usuario {
 
   @Column({ select: false })
   password: string;
-
-  @Column({ type: 'enum', enum: RolUsuario, default: RolUsuario.COMPRADOR })
-  role: RolUsuario;
 
   @Column({ default: false })
   emailVerificado: boolean;

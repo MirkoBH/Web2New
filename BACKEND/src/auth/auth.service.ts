@@ -30,11 +30,10 @@ export class AuthService {
     return { usuario: datos, token };
   }
 
-  private generarToken(usuario: { id: string; email: string; role: string }) {
+  private generarToken(usuario: { id: string; email: string }) {
     return this.jwtService.sign({
-      sub: usuario.id,
+      sub:   usuario.id,
       email: usuario.email,
-      role: usuario.role,
     });
   }
 }

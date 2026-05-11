@@ -90,6 +90,7 @@ export const carsApi = {
   // Endpoint unificado: datos + imágenes en un solo request, IA analiza antes de guardar
   publicar: (formData) => apiFetchMultipart("/cars/publicar", formData),
   actualizar: (id, datos) => apiFetch(`/cars/${id}`, { method: "PATCH", body: JSON.stringify(datos) }),
+  reeditar: (id, formData) => apiFetchMultipart(`/cars/${id}/reeditar`, formData),
   eliminar: (id) => apiFetch(`/cars/${id}`, { method: "DELETE" }),
 };
 
