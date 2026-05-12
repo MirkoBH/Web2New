@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "AutoPulse Frontend",
   "scripts": {
-    "start": "npx serve -s . -l $PORT"
+    "start": "npx serve . -l $PORT --no-clipboard"
   },
   "dependencies": {
     "serve": "^14.2.3"

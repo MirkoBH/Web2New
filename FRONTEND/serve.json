@@ -1,0 +1,22 @@
+{
+  "cleanUrls": true,
+  "trailingSlash": false,
+  "headers": [
+    {
+      "source": "**",
+      "headers": [
+        { "key": "Cache-Control", "value": "no-cache" }
+      ]
+    }
+  ],
+  "rewrites": [
+    { "source": "/login", "destination": "/login.html" },
+    { "source": "/registro", "destination": "/registro.html" },
+    { "source": "/listado", "destination": "/listado.html" },
+    { "source": "/detalle", "destination": "/detalle.html" },
+    { "source": "/publicar", "destination": "/publicar.html" },
+    { "source": "/editar", "destination": "/editar.html" },
+    { "source": "/perfil", "destination": "/perfil.html" },
+    { "source": "/wishlist", "destination": "/wishlist.html" }
+  ]
+}
