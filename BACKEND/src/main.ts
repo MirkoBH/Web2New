@@ -7,8 +7,30 @@ async function bootstrap() {
 
   // ── CORS ──────────────────────────────────────────────────────
   const corsOrigen = process.env.CORS_URL || 'http://localhost:8080';
+
   app.enableCors({
-    origin: [corsOrigen, 'http://localhost:8080', 'http://127.0.0.1:5500'],
+    origin: (origin, callback) => {
+      // Permitir requests sin origin (Postman, mobile apps)
+      if (!origin) return callback(null, true);
+
+      const permitidos = [
+        corsOrigen,
+        'http://localhost:8080',
+        'http://localhost:5500',
+        'http://127.0.0.1:5500',
+        'http://localhost:3001',
+      ];
+
+      // Permitir cualquier subdominio de railway.app
+      const esRailway = origin.endsWith('.railway.app');
+      const esPermitido = permitidos.includes(origin) || esRailway;
+
+      if (esPermitido) {
+        callback(null, true);
+      } else {
+        callback(new Error(`CORS: origen no permitido — ${origin}`));
+      }
+    },
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true,
@@ -24,12 +46,11 @@ async function bootstrap() {
     }),
   );
 
-  // ── Prefijo global de la API ───────────────────────────────────
   app.setGlobalPrefix('api');
 
   const puerto = process.env.PORT || 3000;
-  await app.listen(puerto);
-  console.log(`🚀 AutoPulse API corriendo en: http://localhost:${puerto}/api`);
+  await app.listen(puerto, '0.0.0.0');
+  console.log(`🚀 AutoPulse API corriendo en: http://0.0.0.0:${puerto}/api`);
 }
 
 bootstrap();
