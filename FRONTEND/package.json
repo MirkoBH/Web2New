@@ -1,9 +1,11 @@
 {
-  "name": "web2-frontend",
+  "name": "autopulse-frontend",
   "version": "1.0.0",
-  "private": true,
-  "type": "module",
+  "description": "AutoPulse Frontend",
   "scripts": {
-    "start": "node server.js"
+    "start": "npx serve -s . -l $PORT"
+  },
+  "dependencies": {
+    "serve": "^14.2.3"
   }
 }
