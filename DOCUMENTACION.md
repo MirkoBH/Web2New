@@ -318,9 +318,13 @@ Ajuste por kilometraje: menos de 30.000 km +8 %; 30.001–60.000 sin ajuste; 60.
 
 ## 10. Despliegue
 
+**URLs en producción:**
+- Frontend: https://autopulse-web-52h6.onrender.com
+- Backend: https://autopulse-api-52h6.onrender.com/api (estado: `/api/salud`)
+
 El repositorio incluye `render.yaml` (Blueprint de Render) con dos servicios conectados a la rama `develop`:
 
-- **autopulse-api** — servicio web Node 22 con `rootDir: BACKEND`, chequeo de salud en `/api/salud`.
+- **autopulse-api** — servicio web (plan gratuito: se duerme tras 15 minutos sin uso y el primer pedido tarda ~50 s) Node 22 con `rootDir: BACKEND`, chequeo de salud en `/api/salud`.
 - **autopulse-web** — sitio estático con `rootDir: FRONTEND`; en el build, `generar-config.mjs` escribe la URL de la API.
 
 **Servicios externos:**
