@@ -16,10 +16,9 @@ import type {
   ResultadoTasacion,
 } from './ia.types';
 import { armarMensajeUsuario, PROMPT_SISTEMA } from './prompt-tasacion';
+import { armarMosaico, MAXIMO_FOTOS_MOSAICO } from './mosaico';
 import { validarTasacion } from './validar-tasacion';
 
-/** El modelo solo mira las primeras fotos: alcanza para tasar y limita el costo. */
-const MAXIMO_IMAGENES = 4;
 const TIEMPO_MAXIMO_MS = 45_000;
 export const MENSAJE_IA_NO_DISPONIBLE =
   'El análisis de IA no está disponible, intentá en unos minutos';
@@ -48,9 +47,10 @@ export class IaService {
     datos: DatosTasacion,
     imagenes: ImagenParaTasar[],
   ): Promise<ResultadoTasacion> {
+    const cantidad = Math.min(imagenes.length, MAXIMO_FOTOS_MOSAICO);
     const contenido: ChatCompletionContentPart[] = [
-      ...imagenes.slice(0, MAXIMO_IMAGENES).map(aParteImagen),
-      { type: 'text', text: armarMensajeUsuario(datos) },
+      aParteImagen(await armarMosaico(imagenes.map((i) => i.datos))),
+      { type: 'text', text: armarMensajeUsuario(datos, cantidad) },
     ];
 
     let respuesta: string;
@@ -58,7 +58,7 @@ export class IaService {
       const completado = await this.groq.chat.completions.create({
         model: this.modelo,
         temperature: 0.1,
-        max_completion_tokens: 800,
+        max_completion_tokens: 700,
         response_format: { type: 'json_object' },
         messages: [
           { role: 'system', content: PROMPT_SISTEMA },
@@ -80,11 +80,8 @@ export class IaService {
   }
 }
 
-function aParteImagen(imagen: ImagenParaTasar): ChatCompletionContentPartImage {
-  const url =
-    imagen.tipo === 'url'
-      ? imagen.url
-      : `data:${imagen.mime};base64,${imagen.datos.toString('base64')}`;
+function aParteImagen(jpeg: Buffer): ChatCompletionContentPartImage {
+  const url = `data:image/jpeg;base64,${jpeg.toString('base64')}`;
   return { type: 'image_url', image_url: { url } };
 }
 

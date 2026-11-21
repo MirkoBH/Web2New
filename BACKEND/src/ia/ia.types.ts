@@ -29,10 +29,8 @@ export interface ResultadoTasacion {
   resumen: string;
 }
 
-/**
- * Imagen que se manda al modelo: un buffer ya procesado (al publicar) o la
- * URL pública de una imagen guardada (al editar sin fotos nuevas).
- */
-export type ImagenParaTasar =
-  | { tipo: 'buffer'; datos: Buffer; mime: string }
-  | { tipo: 'url'; url: string };
+/** Foto ya achicada que se manda al modelo. */
+export interface ImagenParaTasar {
+  datos: Buffer;
+  mime: string;
+}

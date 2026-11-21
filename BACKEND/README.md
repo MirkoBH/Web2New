@@ -33,11 +33,11 @@ Todas las rutas empiezan con `/api`. 🔒 = requiere `Authorization: Bearer <tok
 | POST | `/autenticacion/inicio-sesion` | Devuelve `{ usuario, token }` |
 | GET 🔒 | `/usuarios/yo` | Perfil propio |
 | PATCH 🔒 | `/usuarios/yo` | Cambia nombre y teléfono |
-| GET | `/autos` | Listado con filtros: `marca`, `modelo`, `ubicacion`, `precioMin/Max`, `anioMin/Max`, `kmMin/Max`, `combustible`, `transmision`, `orden` (`reciente`, `precio_asc`, `precio_desc`, `km_asc`), `pagina`, `limite` (máx. 50) |
+| GET | `/autos` | Listado con filtros: `texto` (marca o modelo), `marca`, `modelo`, `ubicacion`, `precioMin/Max`, `anioMin/Max`, `kmMin/Max`, `combustible`, `transmision`, `orden` (`reciente`, `precio_asc`, `precio_desc`, `km_asc`), `pagina`, `limite` (máx. 50) |
 | GET 🔒 | `/autos/mios` | Publicaciones propias |
 | GET | `/autos/:id` | Detalle (del vendedor solo se expone el nombre) |
-| POST 🔒 | `/autos` | Publica. `multipart/form-data` con los datos y de 1 a 10 fotos en `imagenes` |
-| PATCH 🔒 | `/autos/:id` | Edita precio, kilometraje, descripción o daños, y opcionalmente reemplaza las fotos. Vuelve a tasar |
+| POST 🔒 | `/autos` | Publica. `multipart/form-data` con los datos y de 3 a 10 fotos en `imagenes` |
+| PATCH 🔒 | `/autos/:id` | Edita precio, kilometraje, descripción o daños, y opcionalmente reemplaza las fotos (de 3 a 10). Vuelve a tasar |
 | DELETE 🔒 | `/autos/:id` | Borra la publicación, sus fotos y sus consultas |
 | POST 🔒 | `/consultas` | Pregunta sobre un auto (no el propio, una por auto) |
 | GET | `/consultas/auto/:autoId` | Preguntas y respuestas públicas del auto |

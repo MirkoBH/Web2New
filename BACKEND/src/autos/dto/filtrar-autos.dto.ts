@@ -22,6 +22,13 @@ export const ORDENES = [
 export type Orden = (typeof ORDENES)[number];
 
 export class FiltrarAutosDto {
+  /** Búsqueda libre: coincide con la marca, el modelo o ambos ("toyota corolla"). */
+  @IsOptional()
+  @Transform(limpiarTexto)
+  @IsString()
+  @MaxLength(80)
+  texto?: string;
+
   @IsOptional()
   @Transform(limpiarTexto)
   @IsString()

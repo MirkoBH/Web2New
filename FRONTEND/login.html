@@ -1,44 +1,52 @@
 <!doctype html>
-<html lang="es">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>AutoPulse | Ingresar</title>
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data: blob: https:; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; script-src 'self' https://cdn.jsdelivr.net; font-src 'self' https://fonts.gstatic.com; connect-src 'self' http://localhost:3000 https://web2new-production.up.railway.app https://*.supabase.co https://*.railway.app;" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
-    <link rel="stylesheet" href="css/styles.css" />
-  </head>
-  <body>
-    <div class="page-shell">
-      <header id="app-navbar"></header>
-      <main class="container py-5 d-flex justify-content-center">
-        <section class="glass-panel p-4 auth-card w-100">
-          <h1 class="h3 mb-3">Ingresar</h1>
-          <p class="text-secondary small">Demo: vendedor@demo.com / Demo1234!</p>
-          <div id="alert-zone"></div>
-          <form id="login-form" class="d-grid gap-3" novalidate>
-            <div>
-              <label class="form-label" for="email">Email</label>
-              <input class="form-control" id="email" type="email" required />
-            </div>
-            <div>
-              <label class="form-label" for="password">Contraseña</label>
-              <input class="form-control" id="password" type="password" required minlength="8" />
-            </div>
-            <button class="btn btn-danger" type="submit">Entrar</button>
-            <a class="text-secondary small" href="registro.html">¿No tenés cuenta? Registrate</a>
-          </form>
-        </section>
-      </main>
-      <footer id="app-footer"></footer>
-    </div>
+<html lang="es-AR" data-bs-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob: https://*.supabase.co; connect-src 'self' http://localhost:3000 https://*.onrender.com; base-uri 'self'; form-action 'self'; object-src 'none'">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+  <title>Ingresar: AutoPulse</title>
+  <meta name="description" content="Ingresá a tu cuenta de AutoPulse para publicar autos, consultar a vendedores y comparar.">
+  <meta name="theme-color" content="#0e0e0f">
+  <link rel="icon" href="img/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..700&family=Instrument+Sans:wght@400..600&display=swap">
+  <link rel="stylesheet" href="vendor/bootstrap/bootstrap.min.css">
+  <link rel="stylesheet" href="css/estilos.css">
+  <script src="config-entorno.js"></script>
+  <script src="vendor/bootstrap/bootstrap.bundle.min.js" defer></script>
+  <script type="module" src="js/paginas/ingreso.js"></script>
+</head>
+<body>
+  <div id="encabezado"></div>
+  <main id="contenido" class="pagina">
+    <div class="wrap">
+      <div class="form-angosto">
+        <h1 class="h2">Ingresar</h1>
+        <p class="muted mt-3 mb-5">¿No tenés cuenta? <a class="link" href="registro.html">Crear cuenta</a></p>
+        <div id="avisos"></div>
+        <form id="formulario" novalidate>
+          <div class="mb-4">
+            <label class="form-label" for="email">Email</label>
+            <input class="form-control" id="email" name="email" type="email" required maxlength="120" autocomplete="email" aria-describedby="email-error" data-error="Escribí un email con @, por ejemplo nombre@mail.com.">
+            
+            <p class="invalid-feedback" id="email-error"></p>
+          </div>
 
-    <div id="compare-drawer-mount"></div>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="runtime-config.js"></script>
-    <script type="module" src="js/pages/login.js"></script>
-  </body>
+          <div class="mb-4">
+            <label class="form-label" for="password">Contraseña</label>
+            <input class="form-control" id="password" name="password" type="password" required maxlength="72" autocomplete="current-password" aria-describedby="password-error" data-error="Escribí tu contraseña.">
+            
+            <p class="invalid-feedback" id="password-error"></p>
+          </div>
+
+          <button class="btn-ap btn-ap--primario w-100" type="submit">Ingresar</button>
+          <p class="estado-form" id="estado" role="status"></p>
+        </form>
+      </div>
+    </div>
+  </main>
+  <div id="pie"></div>
+</body>
 </html>

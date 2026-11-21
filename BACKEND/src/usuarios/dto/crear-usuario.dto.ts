@@ -7,7 +7,11 @@ import {
   MaxLength,
   MinLength,
 } from 'class-validator';
-import { limpiarTexto, normalizarEmail } from '../../comun/transformaciones';
+import {
+  limpiarTexto,
+  normalizarEmail,
+  vacioANulo,
+} from '../../comun/transformaciones';
 
 export class CrearUsuarioDto {
   @Transform(limpiarTexto)
@@ -22,13 +26,13 @@ export class CrearUsuarioDto {
   email: string;
 
   @IsOptional()
-  @Transform(limpiarTexto)
+  @Transform(vacioANulo)
   @IsString()
   @Matches(/^[+\d\s()-]{8,30}$/, {
     message:
       'El teléfono solo puede tener números, espacios y los signos + ( ) -',
   })
-  telefono?: string;
+  telefono?: string | null;
 
   /** bcrypt solo usa los primeros 72 bytes, por eso el máximo. */
   @IsString()

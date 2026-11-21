@@ -49,8 +49,11 @@ Respondé SOLO con este JSON, sin texto adicional:
   "resumen": "2 o 3 oraciones explicando el estado, los daños y el precio justo"
 }`;
 
-export function armarMensajeUsuario(datos: DatosTasacion): string {
-  return `Tasá el vehículo con las fotos adjuntas y estos datos:
+export function armarMensajeUsuario(
+  datos: DatosTasacion,
+  cantidadFotos: number,
+): string {
+  return `La imagen adjunta es un mosaico con ${cantidadFotos} fotos del mismo vehículo. Revisá cada foto del mosaico y tasá el vehículo con estos datos:
 
 <datos_vehiculo>
 Marca y modelo: ${datos.marca} ${datos.modelo}

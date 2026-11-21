@@ -1,0 +1,66 @@
+# Despliegue en Render (https://render.com) con Blueprint:
+# Dashboard → New → Blueprint → elegir este repositorio y la rama.
+# Las variables con `sync: false` se cargan a mano en el Dashboard la primera vez.
+services:
+  # API NestJS
+  - type: web
+    name: autopulse-api
+    runtime: node
+    plan: free
+    region: virginia
+    rootDir: BACKEND
+    branch: develop
+    # --include=dev: el build necesita @nestjs/cli aunque NODE_ENV sea production.
+    buildCommand: npm ci --include=dev && npm run build
+    startCommand: npm run start:prod
+    healthCheckPath: /api/salud
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        sync: false
+      - key: DB_SSL
+        value: "true"
+      - key: JWT_SECRET_PASSWORD
+        generateValue: true
+      - key: CORS_URL
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SECRET_KEY
+        sync: false
+      - key: GROQ_API_KEY
+        sync: false
+      - key: GROQ_MODELO
+        value: qwen/qwen3.8-27b
+
+  # Frontend estático (HTML, CSS y JavaScript)
+  - type: web
+    name: autopulse-web
+    runtime: static
+    rootDir: FRONTEND
+    branch: develop
+    # Genera config-entorno.js con la URL de la API (variable API_URL).
+    buildCommand: node generar-config.mjs
+    staticPublishPath: ./FRONTEND
+    envVars:
+      - key: API_URL
+        sync: false
+    headers:
+      - path: /*
+        name: X-Frame-Options
+        value: DENY
+      - path: /*
+        name: X-Content-Type-Options
+        value: nosniff
+      - path: /*
+        name: Referrer-Policy
+        value: strict-origin-when-cross-origin
+      - path: /*
+        name: Permissions-Policy
+        value: camera=(), microphone=(), geolocation=()
+      - path: /*
+        name: Strict-Transport-Security
+        value: max-age=31536000; includeSubDomains

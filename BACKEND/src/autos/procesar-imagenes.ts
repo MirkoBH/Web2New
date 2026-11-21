@@ -1,17 +1,20 @@
 import { BadRequestException } from '@nestjs/common';
 import sharp from 'sharp';
 
+/** Mínimo de fotos por publicación: varias vistas para que la IA vea los daños. */
+export const MINIMO_IMAGENES = 3;
 export const MAXIMO_IMAGENES = 10;
 export const TAMANIO_MAXIMO_BYTES = 10 * 1024 * 1024;
 const FORMATOS_ACEPTADOS = new Set(['jpeg', 'png', 'webp', 'heif', 'avif']);
 const LADO_MINIMO_PX = 200;
 const LADO_GUARDADO_PX = 1600;
-const LADO_IA_PX = 1024;
+/** Tamaño de la copia para la IA; después se arma el mosaico (ia/mosaico.ts). */
+const LADO_IA_PX = 768;
 
 export interface ImagenProcesada {
   /** Versión que se guarda en el bucket. */
   guardado: Buffer;
-  /** Versión más chica que se manda a la IA (Groq acepta hasta ~4 MB en base64). */
+  /** Versión más chica que se manda a la IA. */
   paraIa: Buffer;
 }
 
@@ -54,9 +57,14 @@ async function procesarImagen(
 
   const [guardado, paraIa] = await Promise.all([
     achicar(archivo.buffer, LADO_GUARDADO_PX, 82),
-    achicar(archivo.buffer, LADO_IA_PX, 75),
+    achicarParaIa(archivo.buffer),
   ]);
   return { guardado, paraIa };
+}
+
+/** Achica una foto (nueva o ya guardada) al tamaño que se le manda a la IA. */
+export function achicarParaIa(buffer: Buffer): Promise<Buffer> {
+  return achicar(buffer, LADO_IA_PX, 75);
 }
 
 function achicar(

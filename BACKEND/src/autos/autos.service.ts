@@ -4,11 +4,13 @@ import {
   Injectable,
   Logger,
   NotFoundException,
+  ServiceUnavailableException,
 } from '@nestjs/common';
 import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
 import { randomUUID } from 'node:crypto';
 import { DataSource, In, Repository, SelectQueryBuilder } from 'typeorm';
-import { IaService } from '../ia/ia.service';
+import { IaService, MENSAJE_IA_NO_DISPONIBLE } from '../ia/ia.service';
+import { MAXIMO_FOTOS_MOSAICO } from '../ia/mosaico';
 import type {
   DatosTasacion,
   ImagenParaTasar,
@@ -28,8 +30,10 @@ import { EditarAutoDto } from './dto/editar-auto.dto';
 import { FiltrarAutosDto, Orden } from './dto/filtrar-autos.dto';
 import { ImagenAuto } from './imagen-auto.entity';
 import {
+  achicarParaIa,
   ImagenProcesada,
   MAXIMO_IMAGENES,
+  MINIMO_IMAGENES,
   procesarImagenes,
 } from './procesar-imagenes';
 
@@ -122,7 +126,7 @@ export class AutosService {
     dto: CrearAutoDto,
     archivos: Express.Multer.File[],
   ): Promise<AutoDetalle> {
-    validarCantidadImagenes(archivos, 1);
+    validarCantidadImagenes(archivos);
     const procesadas = await procesarImagenes(archivos);
     const tasacion = await this.iaService.tasar(
       dto,
@@ -171,7 +175,7 @@ export class AutosService {
     archivos: Express.Multer.File[],
   ): Promise<AutoDetalle> {
     const auto = await this.obtenerPropio(id, vendedorId);
-    validarCantidadImagenes(archivos, 0);
+    if (archivos.length > 0) validarCantidadImagenes(archivos);
 
     const datos: DatosTasacion = {
       ...auto,
@@ -190,10 +194,10 @@ export class AutosService {
     });
     const procesadas =
       archivos.length > 0 ? await procesarImagenes(archivos) : [];
-    const imagenesParaTasar: ImagenParaTasar[] =
+    const imagenesParaTasar =
       procesadas.length > 0
         ? aImagenesParaTasar(procesadas)
-        : anteriores.map((imagen) => ({ tipo: 'url', url: imagen.urlPublica }));
+        : await this.descargarParaTasar(anteriores);
 
     const tasacion = await this.iaService.tasar(datos, imagenesParaTasar);
 
@@ -243,6 +247,31 @@ export class AutosService {
     return auto;
   }
 
+  /**
+   * Al editar sin fotos nuevas se vuelven a tasar las guardadas: se descargan
+   * y se achican antes de armar el mosaico.
+   */
+  private async descargarParaTasar(
+    imagenes: ImagenAuto[],
+  ): Promise<ImagenParaTasar[]> {
+    const primeras = imagenes.slice(0, MAXIMO_FOTOS_MOSAICO);
+    try {
+      return await Promise.all(
+        primeras.map(async (imagen) => {
+          const respuesta = await fetch(imagen.urlPublica);
+          if (!respuesta.ok) throw new Error(`HTTP ${respuesta.status}`);
+          const original = Buffer.from(await respuesta.arrayBuffer());
+          return { datos: await achicarParaIa(original), mime: 'image/jpeg' };
+        }),
+      );
+    } catch (error) {
+      this.logger.error(
+        `No se pudieron leer las fotos guardadas: ${error instanceof Error ? error.message : String(error)}`,
+      );
+      throw new ServiceUnavailableException(MENSAJE_IA_NO_DISPONIBLE);
+    }
+  }
+
   private async cargarImagenes(autos: Auto[]): Promise<void> {
     if (autos.length === 0) return;
     const imagenes = await this.imagenes.find({
@@ -277,6 +306,19 @@ function aplicarFiltros(
   consulta: SelectQueryBuilder<Auto>,
   filtros: FiltrarAutosDto,
 ): void {
+  if (filtros.texto) {
+    // Cada palabra tiene que aparecer en la marca o en el modelo.
+    filtros.texto
+      .split(/\s+/)
+      .slice(0, 5)
+      .forEach((palabra, i) => {
+        consulta.andWhere(
+          `(auto.marca ILIKE :texto${i} OR auto.modelo ILIKE :texto${i})`,
+          { [`texto${i}`]: `%${escaparLike(palabra)}%` },
+        );
+      });
+  }
+
   const textos = {
     marca: filtros.marca,
     modelo: filtros.modelo,
@@ -325,12 +367,11 @@ function escaparLike(texto: string): string {
   return texto.replace(/[\\%_]/g, (caracter) => `\\${caracter}`);
 }
 
-function validarCantidadImagenes(
-  archivos: Express.Multer.File[],
-  minimo: number,
-): void {
-  if (archivos.length < minimo) {
-    throw new BadRequestException('Subí al menos una foto del auto');
+function validarCantidadImagenes(archivos: Express.Multer.File[]): void {
+  if (archivos.length < MINIMO_IMAGENES) {
+    throw new BadRequestException(
+      `Subí al menos ${MINIMO_IMAGENES} fotos del auto`,
+    );
   }
   if (archivos.length > MAXIMO_IMAGENES) {
     throw new BadRequestException(`Podés subir hasta ${MAXIMO_IMAGENES} fotos`);
@@ -339,7 +380,6 @@ function validarCantidadImagenes(
 
 function aImagenesParaTasar(procesadas: ImagenProcesada[]): ImagenParaTasar[] {
   return procesadas.map((imagen) => ({
-    tipo: 'buffer',
     datos: imagen.paraIa,
     mime: 'image/jpeg',
   }));

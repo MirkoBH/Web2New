@@ -1,55 +1,73 @@
 <!doctype html>
-<html lang="es">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>AutoPulse | Registro</title>
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data: blob: https:; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; script-src 'self' https://cdn.jsdelivr.net; font-src 'self' https://fonts.gstatic.com; connect-src 'self' http://localhost:3000 https://web2new-production.up.railway.app https://*.supabase.co https://*.railway.app;" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
-    <link rel="stylesheet" href="css/styles.css" />
-  </head>
-  <body>
-    <div class="page-shell">
-      <header id="app-navbar"></header>
-      <main class="container py-5 d-flex justify-content-center">
-        <section class="glass-panel p-4 auth-card w-100">
-          <h1 class="h3 mb-1">Crear cuenta</h1>
-          <p class="text-secondary small mb-3">Con una sola cuenta podés publicar y comprar autos.</p>
-          <div id="alert-zone"></div>
-          <form id="register-form" class="d-grid gap-3" novalidate>
-            <div>
-              <label class="form-label" for="nombre">Nombre completo</label>
-              <input class="form-control" id="nombre" required minlength="3" maxlength="80" />
-            </div>
-            <div>
-              <label class="form-label" for="email">Email</label>
-              <input class="form-control" id="email" type="email" required />
-            </div>
-            <div>
-              <label class="form-label" for="telefono">Teléfono</label>
-              <input class="form-control" id="telefono" minlength="8" maxlength="30" />
-            </div>
-            <div>
-              <label class="form-label" for="password">Contraseña</label>
-              <input class="form-control" id="password" type="password" required minlength="8" />
-            </div>
-            <div class="form-check">
-              <input class="form-check-input" type="checkbox" id="email-verificado" required />
-              <label class="form-check-label" for="email-verificado">Confirmo que el email es válido</label>
-            </div>
-            <button class="btn btn-danger" type="submit">Registrarme</button>
-          </form>
-          <p class="small text-secondary mt-3 mb-0">¿Ya tenés cuenta? <a href="login.html" class="text-danger">Ingresá</a></p>
-        </section>
-      </main>
-      <footer id="app-footer"></footer>
+<html lang="es-AR" data-bs-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob: https://*.supabase.co; connect-src 'self' http://localhost:3000 https://*.onrender.com; base-uri 'self'; form-action 'self'; object-src 'none'">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+  <title>Crear cuenta: AutoPulse</title>
+  <meta name="description" content="Creá tu cuenta en AutoPulse para comprar o vender autos usados con tasación por IA.">
+  <meta name="theme-color" content="#0e0e0f">
+  <link rel="icon" href="img/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..700&family=Instrument+Sans:wght@400..600&display=swap">
+  <link rel="stylesheet" href="vendor/bootstrap/bootstrap.min.css">
+  <link rel="stylesheet" href="css/estilos.css">
+  <script src="config-entorno.js"></script>
+  <script src="vendor/bootstrap/bootstrap.bundle.min.js" defer></script>
+  <script type="module" src="js/paginas/registro.js"></script>
+</head>
+<body>
+  <div id="encabezado"></div>
+  <main id="contenido" class="pagina">
+    <div class="wrap">
+      <div class="form-angosto">
+        <h1 class="h2">Crear cuenta</h1>
+        <p class="muted mt-3 mb-5">Con una cuenta publicás autos, consultás a vendedores, guardás favoritos y comparás. ¿Ya tenés una? <a class="link" href="login.html">Ingresar</a></p>
+        <div id="avisos"></div>
+        <form id="formulario" novalidate>
+          <div class="mb-4">
+            <label class="form-label" for="nombre">Nombre y apellido</label>
+            <input class="form-control" id="nombre" name="nombre" type="text" required minlength="3" maxlength="80" autocomplete="name" aria-describedby="nombre-error" data-error="Escribí tu nombre (al menos 3 letras).">
+            
+            <p class="invalid-feedback" id="nombre-error"></p>
+          </div>
+
+          <div class="mb-4">
+            <label class="form-label" for="email">Email</label>
+            <input class="form-control" id="email" name="email" type="email" required maxlength="120" autocomplete="email" aria-describedby="email-error" data-error="Escribí un email con @, por ejemplo nombre@mail.com.">
+            
+            <p class="invalid-feedback" id="email-error"></p>
+          </div>
+
+          <div class="mb-4">
+            <label class="form-label" for="telefono">Teléfono (opcional)</label>
+            <input class="form-control" id="telefono" name="telefono" type="tel" maxlength="30" pattern="[+0-9 \(\)\-]{8,30}" autocomplete="tel" aria-describedby="telefono-error telefono-ayuda" data-error="Usá solo números, espacios y + ( ) -, mínimo 8.">
+            <p class="form-text" id="telefono-ayuda">No se muestra en tus publicaciones.</p>
+            <p class="invalid-feedback" id="telefono-error"></p>
+          </div>
+
+          <div class="mb-4">
+            <label class="form-label" for="password">Contraseña</label>
+            <input class="form-control" id="password" name="password" type="password" required minlength="8" maxlength="72" pattern="(?=.*[A-Za-z])(?=.*\d)(?=.*[^A-Za-z\d]).{8,72}" autocomplete="new-password" aria-describedby="password-error password-ayuda" data-error="La contraseña necesita 8 caracteres o más, con letras, números y un símbolo.">
+            <p class="form-text" id="password-ayuda">Mínimo 8 caracteres, con letras, números y un símbolo.</p>
+            <p class="invalid-feedback" id="password-error"></p>
+          </div>
+
+          <div class="mb-4">
+            <label class="form-label" for="confirmar">Repetí la contraseña</label>
+            <input class="form-control" id="confirmar" name="confirmar" type="password" required maxlength="72" autocomplete="new-password" aria-describedby="confirmar-error" data-error="Las contraseñas no coinciden.">
+            
+            <p class="invalid-feedback" id="confirmar-error"></p>
+          </div>
+
+          <button class="btn-ap btn-ap--primario w-100" type="submit">Crear cuenta</button>
+          <p class="estado-form" id="estado" role="status"></p>
+        </form>
+      </div>
     </div>
-    <div id="compare-drawer-mount"></div>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="runtime-config.js"></script>
-    <script type="module" src="js/pages/registro.js"></script>
-  </body>
+  </main>
+  <div id="pie"></div>
+</body>
 </html>

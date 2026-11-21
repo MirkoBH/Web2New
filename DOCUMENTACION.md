@@ -8,9 +8,9 @@
 
 ## 1. Descripción del sistema
 
-AutoPulse es una plataforma web de compra y venta de autos usados en Argentina. Cualquier usuario registrado puede actuar como **vendedor** (publicar vehículos) o como **comprador** (explorar, consultar y guardar favoritos), alternando entre ambos modos desde el navbar con un solo botón.
+AutoPulse es una plataforma web de compra y venta de autos usados en Argentina. Cualquier usuario registrado puede actuar como **vendedor** (publicar y responder consultas) o como **comprador** (consultar, guardar favoritos y comparar), y cambia de modo desde el encabezado.
 
-Cada publicación pasa por un análisis automático de inteligencia artificial que examina visualmente las fotos del vehículo, detecta daños, clasifica el estado y estima el precio real de mercado en Argentina. El auto solo se guarda en la base de datos una vez que la IA completa el análisis exitosamente.
+Cada publicación pasa por un análisis de inteligencia artificial que revisa las fotos del vehículo, detecta daños, clasifica el estado y estima un rango de precio de mercado en dólares. El auto solo se guarda cuando la IA termina el análisis; si la IA no está disponible, no se publica nada y se le pide al usuario que intente de nuevo.
 
 ---
 
@@ -18,32 +18,30 @@ Cada publicación pasa por un análisis automático de inteligencia artificial q
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
-│  FRONTEND  (HTML + CSS + JavaScript Vanilla)                 │
-│  8 páginas — sin frameworks, módulos ES6 nativos            │
-│  Hosteado en: Railway                                        │
-│  URL: https://frontend-production-0959.up.railway.app        │
+│  FRONTEND  (HTML + CSS + JavaScript Vanilla + Bootstrap 5)   │
+│  8 páginas, módulos ES nativos, sin frameworks de JS         │
+│  Hosteado en: Render (sitio estático)                        │
 └──────────────────────┬───────────────────────────────────────┘
-                       │  fetch() REST JSON
+                       │  fetch() REST JSON / multipart
                        │  Authorization: Bearer JWT
 ┌──────────────────────▼───────────────────────────────────────┐
-│  BACKEND  (NestJS 11 + TypeScript + TypeORM 0.3)            │
+│  BACKEND  (NestJS 11 + TypeScript + TypeORM 0.3)             │
 │  Prefijo global: /api                                        │
-│  5 módulos: Auth │ Users │ Cars │ IA │ Consultas            │
-│  Hosteado en: Railway                                        │
-│  URL: https://web2new-production.up.railway.app              │
+│  Módulos: autenticacion │ usuarios │ autos │ consultas │     │
+│           ia │ salud                                         │
+│  Hosteado en: Render (servicio web)                          │
 └───────────┬──────────────────────────┬───────────────────────┘
             │                          │
 ┌───────────▼────────┐    ┌────────────▼──────────────────────┐
 │  PostgreSQL 17      │    │  Supabase Storage                 │
 │  (Supabase)         │    │  Bucket: imagenes-autos           │
-│  Región: sa-east-1  │    │  Acceso público de lectura        │
-│  3 tablas           │    │  Estructura: {autoId}/{uuid}.ext  │
+│  Región: sa-east-1  │    │  Lectura pública, escritura solo  │
+│  4 tablas, con RLS  │    │  con la clave secreta del backend │
 └────────────────────┘    └───────────────────────────────────┘
                                         │
                            ┌────────────▼──────────────────────┐
                            │  Groq API                         │
-                           │  llama-4-scout-17b (con visión)   │
-                           │  llama-3.3-70b (fallback texto)   │
+                           │  qwen/qwen3.8-27b (con visión)    │
                            └───────────────────────────────────┘
 ```
 
@@ -51,15 +49,16 @@ Cada publicación pasa por un análisis automático de inteligencia artificial q
 
 | Capa | Tecnología | Versión |
 |---|---|---|
-| Frontend | HTML5, CSS3, Bootstrap, JavaScript ES6+ | Bootstrap 5.3.3 |
+| Frontend | HTML5, CSS3, JavaScript (módulos ES), Bootstrap | Bootstrap 5.3.3 (servido desde el propio sitio) |
 | Backend | NestJS, TypeScript | NestJS 11 |
-| ORM | TypeORM | 0.3.29 |
+| ORM | TypeORM | 0.3 |
 | Base de datos | PostgreSQL en Supabase | PostgreSQL 17 |
-| Storage | Supabase Storage SDK | 2.105.4 |
-| IA | Groq SDK | 1.1.2 |
-| Autenticación | JWT + Passport | @nestjs/jwt |
-| Hash contraseñas | bcryptjs | — |
-| Validación DTOs | class-validator + class-transformer | — |
+| Storage | @supabase/storage-js | 2.x |
+| Imágenes | sharp (validación, rotación, tamaño, sin EXIF) | 0.35 |
+| IA | groq-sdk | 1.x |
+| Autenticación | JWT + Passport | @nestjs/jwt 11 |
+| Seguridad HTTP | helmet, @nestjs/throttler | — |
+| Validación | class-validator + class-transformer | — |
 
 ---
 
@@ -67,288 +66,264 @@ Cada publicación pasa por un análisis automático de inteligencia artificial q
 
 ```
 Web2New/
+├── render.yaml                    Despliegue de API y frontend en Render
 ├── DOCUMENTACION.md
-│
-├── FRONTEND/
-│   ├── index.html            ← Landing page
-│   ├── listado.html          ← Listado con filtros
-│   ├── detalle.html          ← Detalle de publicación
-│   ├── publicar.html         ← Formulario de publicación
-│   ├── editar.html           ← Editar publicación
-│   ├── perfil.html           ← Panel del usuario
-│   ├── login.html            ← Inicio de sesión
-│   ├── registro.html         ← Registro de cuenta
-│   ├── runtime-config.js     ← URL del backend
-│   ├── serve.json            ← Configuración del servidor estático
-│   ├── railway.toml          ← Configuración de despliegue Railway
-│   ├── css/
-│   │   └── styles.css        ← Estilos globales, responsive mobile-first
-│   └── js/
-│       ├── app-init.js       ← Inicializa navbar, footer, comparador
-│       ├── components/
-│       │   ├── navbar.js     ← Navbar con sistema de modos
-│       │   ├── footer.js     ← Footer del sitio
-│       │   ├── car-card.js   ← Tarjeta de auto reutilizable
-│       │   └── compare-drawer.js ← Panel lateral de comparación
-│       ├── pages/
-│       │   ├── index.js      ← Autos destacados en landing
-│       │   ├── listado.js    ← Filtros, paginación, grilla
-│       │   ├── detalle.js    ← Galería, ficha técnica, consultas
-│       │   ├── publicar.js   ← Formulario + envío a API
-│       │   ├── editar.js     ← Edición con re-análisis IA
-│       │   ├── perfil.js     ← Panel vendedor y comprador
-│       │   ├── login.js      ← Autenticación
-│       │   └── registro.js   ← Registro de usuario
-│       ├── utils/
-│       │   ├── api.js        ← Cliente HTTP centralizado
-│       │   ├── auth.js       ← requireAuth() con verificación de modo
-│       │   ├── storage.js    ← localStorage: sesión, modo, compare, wishlist
-│       │   ├── dom.js        ← Helpers: qs(), formatUsd(), formatKm()
-│       │   └── cards.js      ← renderCards() reutilizable
-│       └── data/
-│           └── catalogs.js   ← Marcas y provincias de Argentina
-│
-└── BACKEND/
-    ├── railway.toml          ← Configuración de despliegue Railway
-    ├── nixpacks.toml         ← Runtime Node.js 20 para Railway
-    ├── .env.example          ← Template de variables de entorno
-    └── src/
-        ├── main.ts           ← Bootstrap, CORS, ValidationPipe
-        ├── app.module.ts     ← Módulo raíz: TypeORM, módulos
-        ├── auth/             ← Registro, login, JWT strategy
-        ├── users/            ← Entidad, service y controller de usuarios
-        ├── cars/             ← Auto, ImagenAuto, CRUD, Storage
-        ├── ia/               ← Integración con Groq
-        ├── consultas/        ← Preguntas comprador → vendedor
-        └── common/           ← Guards y decoradores compartidos
+├── BACKEND/
+│   ├── base-de-datos/
+│   │   ├── esquema.sql            Esquema completo (crear la base desde cero)
+│   │   └── migraciones/           Cambios aplicados a la base existente
+│   └── src/
+│       ├── main.ts                helmet, CORS, ValidationPipe, prefijo /api
+│       ├── app.module.ts          TypeORM, límite de pedidos, módulos
+│       ├── configuracion/         Validación de variables de entorno
+│       ├── comun/                 Guardia JWT, @UsuarioActual, tipos, nombres snake_case
+│       ├── autenticacion/         Registro e inicio de sesión
+│       ├── usuarios/              Perfil propio
+│       ├── autos/                 Publicaciones, filtros, fotos, almacenamiento
+│       ├── consultas/             Preguntas y respuestas públicas
+│       ├── ia/                    Prompt, mosaico de fotos, llamada a Groq, validación
+│       └── salud/                 Estado del servicio
+└── FRONTEND/
+    ├── index.html, listado.html, detalle.html, publicar.html,
+    │   editar.html, perfil.html, login.html, registro.html
+    ├── config-entorno.js          URL de la API (se genera en el deploy)
+    ├── generar-config.mjs         Genera config-entorno.js desde API_URL
+    ├── css/estilos.css            Sistema visual (tokens, botones, tarjetas)
+    ├── data/                      Marcas/modelos y provincias argentinas
+    ├── vendor/bootstrap/          Bootstrap 5.3.3
+    └── js/
+        ├── nucleo/                api, sesión, utilidades DOM, catálogos
+        ├── componentes/           encabezado, pie, tarjeta, comparador,
+        │                          panel de tasación, selector, campo de fotos
+        └── paginas/               un archivo por página
 ```
+
+**Convención de nombres:** todo el dominio está en español (carpetas, módulos, clases, funciones, rutas, columnas y archivos). En el backend se mantienen en inglés solo los sufijos técnicos que impone NestJS (`Module`, `Controller`, `Service`, `Dto`, `Guard`, `.entity`) y las palabras clave del lenguaje. Las columnas de la base van en `snake_case` y las propiedades en `camelCase`; la traducción la hace `EstrategiaNombresSnake`.
 
 ---
 
 ## 4. Modelo de datos
 
-### Tabla `usuarios`
-| Campo | Tipo | Descripción |
-|---|---|---|
-| id | UUID PK | Identificador único |
-| nombre | VARCHAR(80) | Nombre completo |
-| email | VARCHAR(120) UNIQUE | Email de acceso |
-| telefono | VARCHAR(30) | Teléfono (opcional) |
-| password | TEXT | Hash bcrypt — `select: false` |
-| emailVerificado | BOOLEAN | Siempre `true` en esta versión |
-| createdAt / updatedAt | TIMESTAMPTZ | Auditoría automática |
+Todas las tablas tienen Row Level Security activado y sin políticas: la clave pública de Supabase no puede leer ni escribir nada. Solo el backend accede, con el usuario dueño de la base.
 
-> No existe columna `role`. El modo vendedor/comprador es un estado del frontend en `localStorage`.
+### Tabla `usuarios`
+
+| Columna | Tipo | Notas |
+|---|---|---|
+| id | uuid | PK |
+| nombre | varchar(80) | |
+| email | varchar(120) | único, en minúsculas |
+| telefono | varchar(30) | opcional, nunca se expone en publicaciones |
+| password | varchar | hash bcrypt, no se lee salvo al iniciar sesión |
+| email_verificado | boolean | |
+| creado_en, actualizado_en | timestamptz | |
 
 ### Tabla `autos`
-| Campo | Tipo | Descripción |
+
+| Columna | Tipo | Notas |
 |---|---|---|
-| id | UUID PK | Identificador único |
-| vendedor_id | UUID FK → usuarios | Dueño de la publicación |
-| marca / modelo / color | VARCHAR | Datos del vehículo |
-| anio / kilometraje | INTEGER | Año y km recorridos |
-| transmision | ENUM | `Manual` / `Automatico` |
-| combustible | ENUM | `Nafta` / `Diesel` / `Hibrido` / `Electrico` |
-| precio | NUMERIC(10,2) | Precio pedido por el vendedor (USD) |
-| ubicacion | VARCHAR(100) | Provincia argentina |
-| descripcion | TEXT | Descripción del vendedor |
-| detallesDanios | TEXT | Daños declarados |
-| iaEstado | VARCHAR(40) | Estado según IA |
-| iaPuntaje | FLOAT | Puntaje IA (1.0 – 10.0) |
-| iaDanios | TEXT | Daños detectados por IA |
-| iaRangoPrecioMin / Max | NUMERIC(10,2) | Rango de precio de mercado (USD) |
-| iaResumen | TEXT | Resumen del análisis |
-| iaAprobado | BOOLEAN | Siempre `true` |
-| activo | BOOLEAN | `true` = visible en listado |
-| createdAt / updatedAt | TIMESTAMPTZ | Auditoría automática |
+| id | uuid | PK |
+| vendedor_id | uuid | FK → usuarios, borrado en cascada |
+| marca, modelo, color | varchar | color opcional |
+| anio, kilometraje | integer | índice en kilometraje |
+| transmision | enum | Manual, Automatico |
+| combustible | enum | Nafta, Diesel, Hibrido, Electrico |
+| precio | numeric(10,2) | USD |
+| ubicacion | varchar(100) | provincia |
+| descripcion, detalles_danios | text | daños declarados opcional |
+| ia_estado | varchar(40) | Excelente, Buen estado, Regular, Requiere reparacion |
+| ia_puntaje | double | 1 a 10 |
+| ia_danios, ia_resumen | text | |
+| ia_precio_min, ia_precio_max | numeric(10,2) | rango de mercado en USD |
+| creado_en, actualizado_en | timestamptz | índice en creado_en |
 
 ### Tabla `imagenes_auto`
-| Campo | Tipo | Descripción |
+
+| Columna | Tipo | Notas |
 |---|---|---|
-| id | UUID PK | Identificador único |
-| auto_id | UUID FK → autos CASCADE | Auto al que pertenece |
-| storage_path | TEXT | Path en el bucket: `{autoId}/{uuid}.ext` |
-| url_publica | TEXT | URL pública de Supabase Storage |
-| nombre | VARCHAR(255) | Nombre original del archivo |
-| orden | INTEGER | Posición en galería (0 = portada) |
-| createdAt | TIMESTAMPTZ | Fecha de carga |
+| id | uuid | PK |
+| auto_id | uuid | FK → autos, cascada |
+| ruta_archivo | text | `{autoId}/{uuid}.jpg` dentro del bucket |
+| url_publica | text | |
+| orden | integer | 0 es la portada |
+| creado_en | timestamptz | |
 
 ### Tabla `consultas`
-| Campo | Tipo | Descripción |
-|---|---|---|
-| id | UUID PK | Identificador único |
-| auto_id | UUID FK → autos CASCADE | Publicación consultada |
-| comprador_id | UUID FK → usuarios | Usuario que pregunta |
-| vendedor_id | UUID | Dueño del auto |
-| pregunta | TEXT | Texto de la consulta |
-| respuesta | TEXT NULL | Respuesta del vendedor |
-| createdAt | TIMESTAMPTZ | Fecha |
 
-**Índices:** `idx_autos_marca`, `idx_autos_precio`, `idx_autos_vendedor`, `idx_autos_activo`, `idx_consultas_auto`, `idx_consultas_vendedor`
+| Columna | Tipo | Notas |
+|---|---|---|
+| id | uuid | PK |
+| auto_id | uuid | FK → autos, cascada |
+| comprador_id | uuid | FK → usuarios, cascada |
+| vendedor_id | uuid | FK → usuarios, cascada |
+| pregunta | text | |
+| respuesta | text | null hasta que responde el vendedor |
+| creado_en | timestamptz | |
+
+Restricción única `(auto_id, comprador_id)`: una consulta por comprador y por auto.
 
 ---
 
 ## 5. Páginas del Frontend
 
-| Página | Archivo | Descripción | Acceso |
-|---|---|---|---|
-| Landing | `index.html` | Hero, estadísticas, marcas, autos destacados, FAQ | Público |
-| Listado | `listado.html` | Grilla con filtros y paginación | Público |
-| Detalle | `detalle.html` | Galería, ficha técnica, informe IA, consultas | Público |
-| Publicar | `publicar.html` | Formulario + fotos → análisis IA → publicación | Modo vendedor |
-| Editar | `editar.html` | Edición de datos y fotos con re-análisis IA | Modo vendedor (dueño) |
-| Perfil | `perfil.html` | Panel vendedor o comprador según modo activo | Sesión activa |
-| Login | `login.html` | Inicio de sesión | Público |
-| Registro | `registro.html` | Crear cuenta | Público |
+| Página | Acceso | Contenido |
+|---|---|---|
+| `index.html` | Público | Portada: último auto publicado con su tasación, cómo tasa la IA, autos recientes con búsqueda rápida, preguntas frecuentes |
+| `listado.html` | Público | Filtros (marca o modelo, marca, modelo, precio con deslizador, año, kilometraje, provincia, combustible, transmisión), orden, paginación; los filtros quedan en la URL |
+| `detalle.html` | Público | Galería, características, tasación por IA, descripción, preguntas y respuestas públicas |
+| `publicar.html` | Cuenta, modo vendedor | Formulario con 3 a 10 fotos; la IA tasa al enviar |
+| `editar.html` | Dueño del auto | Precio, kilometraje, descripción, daños y fotos; la IA vuelve a tasar |
+| `perfil.html` | Cuenta | Vendedor: publicaciones, consultas recibidas (se actualizan cada minuto), datos. Comprador: favoritos, datos |
+| `login.html`, `registro.html` | Público | Ingreso y alta de cuenta con validación en el navegador |
+
+El **comparador** es un panel lateral (offcanvas de Bootstrap) disponible en todas las páginas para usuarios con cuenta. Compara dos autos por precio, año, kilometraje, combustible, transmisión, ubicación, daños declarados y el resultado de la IA.
+
+**Diseño:** rediseño completo siguiendo los criterios de [taste-skill](https://www.tasteskill.dev/), aplicados con CSS propio sobre Bootstrap: modo oscuro con el rojo de la marca como único acento, una escala de espacios (4 a 128 px), un solo estilo de botón y de tarjeta, encabezado fijo opaco, una sección por pantalla en la portada, entrada del héroe una sola vez al cargar y microanimaciones al pasar el mouse. Se respetan `prefers-reduced-motion`, el foco visible y la navegación por teclado.
 
 ---
 
 ## 6. Endpoints de la API
 
-**Base URL:** `https://web2new-production.up.railway.app/api`  
-**Autenticación:** header `Authorization: Bearer {JWT}` (expiración 7 días)
+Todas las rutas empiezan con `/api`. 🔒 = requiere `Authorization: Bearer <token>`.
 
-### Auth — público
-| Método | Ruta | Body | Respuesta |
-|---|---|---|---|
-| POST | `/auth/register` | `{nombre, email, telefono?, password}` | `{usuario, token}` |
-| POST | `/auth/login` | `{email, password}` | `{usuario, token}` |
+### Autenticación — público
 
-### Usuarios — requiere JWT
 | Método | Ruta | Descripción |
 |---|---|---|
-| GET | `/users/me` | Perfil del usuario autenticado |
-| PATCH | `/users/me` | Actualizar nombre y/o teléfono |
-| GET | `/users/:id` | Datos públicos de un usuario |
+| POST | `/autenticacion/registro` | Crea la cuenta; devuelve `{ usuario, token }` |
+| POST | `/autenticacion/inicio-sesion` | Devuelve `{ usuario, token }` |
+
+### Usuarios
+
+| Método | Ruta | Descripción |
+|---|---|---|
+| GET 🔒 | `/usuarios/yo` | Perfil propio |
+| PATCH 🔒 | `/usuarios/yo` | Cambia nombre y teléfono |
 
 ### Autos
-| Método | Ruta | Auth | Descripción |
-|---|---|---|---|
-| GET | `/cars` | No | Listado paginado con filtros |
-| GET | `/cars/:id` | No | Detalle con imágenes y vendedor |
-| GET | `/cars/mis-autos` | JWT | Autos publicados por el usuario |
-| POST | `/cars/publicar` | JWT | Publicar: multipart datos + imágenes. IA analiza antes de guardar |
-| POST | `/cars/:id/reeditar` | JWT | Editar con re-análisis IA |
-| PATCH | `/cars/:id` | JWT | Editar datos sin IA |
-| DELETE | `/cars/:id` | JWT | Eliminar publicación (hard delete: DB + Storage) |
-| DELETE | `/cars/:id/imagenes/:imgId` | JWT | Eliminar imagen individual |
-| PATCH | `/cars/:id/imagenes/reordenar` | JWT | Reordenar galería |
 
-**Filtros de `GET /cars`:** `marca`, `modelo`, `ubicacion`, `precioMin`, `precioMax`, `anioMin`, `anioMax`, `combustible`, `transmision`, `orden` (`reciente` / `precio_asc` / `precio_desc` / `km_asc`), `pagina`, `limite`
+| Método | Ruta | Descripción |
+|---|---|---|
+| GET | `/autos` | Listado. Filtros: `texto`, `marca`, `modelo`, `ubicacion`, `precioMin/Max`, `anioMin/Max`, `kmMin/Max`, `combustible`, `transmision`; `orden` (`reciente`, `precio_asc`, `precio_desc`, `km_asc`); `pagina`, `limite` (máx. 50). Devuelve `{ datos, total, pagina, limite, paginas }` |
+| GET 🔒 | `/autos/mios` | Publicaciones propias |
+| GET | `/autos/:id` | Detalle; del vendedor solo `{ id, nombre }` |
+| POST 🔒 | `/autos` | Publica: `multipart/form-data` con los datos y 3 a 10 fotos en `imagenes` |
+| PATCH 🔒 | `/autos/:id` | Edita precio, kilometraje, descripción o daños; fotos nuevas opcionales (3 a 10, reemplazan a las anteriores). Vuelve a tasar |
+| DELETE 🔒 | `/autos/:id` | Borra la publicación, sus fotos y sus consultas |
 
 ### Consultas
-| Método | Ruta | Auth | Descripción |
-|---|---|---|---|
-| POST | `/consultas` | JWT | Enviar consulta (máx. 1 por usuario por auto) |
-| GET | `/consultas/auto/:id` | No | Consultas públicas de una publicación |
-| GET | `/consultas/mis-consultas` | JWT | Consultas recibidas en mis publicaciones |
-| PATCH | `/consultas/:id/responder` | JWT | Responder una consulta |
 
-### IA
-| Método | Ruta | Auth | Descripción |
-|---|---|---|---|
-| POST | `/ia/analizar` | JWT | Análisis rápido por texto sin imágenes |
+| Método | Ruta | Descripción |
+|---|---|---|
+| POST 🔒 | `/consultas` | Pregunta sobre un auto (no el propio, una por auto) |
+| GET | `/consultas/auto/:autoId` | Preguntas y respuestas del auto; del comprador solo el nombre |
+| GET 🔒 | `/consultas/recibidas` | Consultas sobre mis publicaciones |
+| PATCH 🔒 | `/consultas/:id/respuesta` | El vendedor responde |
+
+### Salud
+
+| Método | Ruta | Descripción |
+|---|---|---|
+| GET | `/salud` | `{ estado, baseDeDatos }`, usado por Render |
+
+**Códigos de error:** 400 datos inválidos, 401 sin sesión o credenciales incorrectas, 403 sin permiso sobre el recurso, 404 no existe, 409 email ya registrado o consulta repetida, 429 demasiados pedidos, 503 IA no disponible.
 
 ---
 
 ## 7. Sistema de modos (Comprador / Vendedor)
 
-Todos los usuarios tienen acceso completo. El **modo activo** determina qué funcionalidades son visibles:
+Todos los usuarios tienen la misma cuenta. El **modo activo** decide qué se muestra:
 
-| Funcionalidad | Modo Comprador | Modo Vendedor |
-|---|---|---|
-| Explorar listado y detalle | ✅ | ✅ |
-| Enviar consulta | ✅ | ❌ |
-| Guardar favoritos | ✅ | ❌ |
-| Comparar autos | ✅ | ✅ |
-| Publicar auto | ❌ | ✅ |
-| Editar / Eliminar publicación propia | ❌ | ✅ |
-| Responder consultas recibidas | ❌ | ✅ |
+| Funcionalidad | Sin cuenta | Modo Comprador | Modo Vendedor |
+|---|---|---|---|
+| Ver listado y detalle | ✅ | ✅ | ✅ |
+| Enviar consulta | ❌ | ✅ (no en autos propios) | ❌ |
+| Guardar favoritos | ❌ | ✅ (no en autos propios) | ❌ |
+| Comparar autos | ❌ | ✅ | ✅ |
+| Publicar auto | ❌ | ❌ (se ofrece pasar a vendedor) | ✅ |
+| Editar / eliminar publicación propia | ❌ | ✅ | ✅ |
+| Responder consultas | ❌ | ❌ | ✅ |
 
-El modo se almacena en `localStorage` y se cambia desde el navbar. Al registrarse o iniciar sesión el modo inicial es siempre **comprador**.
+El modo, los favoritos y la lista del comparador se guardan en `localStorage`, separados por usuario. Al registrarse o ingresar, el modo inicial es **comprador**.
 
 ---
 
 ## 8. Integración con IA (Groq)
 
-### Proveedor y modelos
-- **Con imágenes:** `meta-llama/llama-4-scout-17b-16e-instruct` (visión)
-- **Solo texto:** `llama-3.3-70b-versatile` (fallback sin fotos)
-- **Fallback:** si Groq falla se usa análisis simulado para no bloquear la publicación
+### Proveedor y modelo
+
+- **Groq**, modelo `qwen/qwen3.8-27b` (multimodal), configurable con la variable `GROQ_MODELO`.
+- Respuesta en formato JSON forzado (`response_format: json_object`), temperatura 0.1.
 
 ### Flujo al publicar
 
-```
-1. Usuario llena formulario y selecciona fotos (hasta 10)
-2. Frontend envía todo en UN solo request multipart → POST /api/cars/publicar
-3. Backend recibe buffers en memoria RAM (sin guardar en disco ni DB)
-4. Buffers convertidos a base64 → enviados a Groq con datos del auto
-5. Groq analiza visualmente las fotos y devuelve JSON con el análisis
-6. Auto guardado en PostgreSQL + imágenes subidas a Supabase Storage
-7. Se devuelve el auto completo con URLs públicas al frontend
-```
+1. El backend valida cada foto leyendo su contenido con sharp (no confía en la extensión), la rota según EXIF, le quita los metadatos y la achica (1600 px para guardar, 768 px para la IA).
+2. Arma un **mosaico** con hasta 9 fotos en una sola imagen. La cuenta gratuita de Groq admite unos 7.000 tokens por minuto y cobra un monto fijo por imagen: el mosaico permite que la IA vea todas las fotos dentro de ese límite.
+3. Envía el mosaico y los datos del auto. El texto del vendedor va dentro de `<datos_vehiculo>` y el prompt aclara que es información a evaluar y nunca instrucciones (mitigación de inyección de prompt).
+4. Valida la respuesta: estado entre los cuatro posibles, puntaje entre 1 y 10, precios enteros positivos con mínimo ≤ máximo, textos con largo máximo. Si algo no cumple, responde 503.
+5. Solo si la tasación es válida sube las fotos al bucket y guarda auto e imágenes en una transacción. Si falla la subida o la base, borra las fotos ya subidas.
+
+Al **editar**, si no hay fotos nuevas, el backend descarga las guardadas y arma el mosaico con ellas.
 
 ### Criterios de clasificación
 
 | Estado | Criterio | Ajuste de precio |
 |---|---|---|
-| **Excelente** | Sin ningún daño visible. Km < 50.000. Aspecto impecable | Sin descuento |
-| **Buen estado** | Sin daños visibles. Km hasta ~100.000 | -3% a -5% |
-| **Regular** | Daños leves visibles (rayones, golpes) y/o Km > 100.000 | -10% a -20% |
-| **Requiere reparacion** | Daños graves: abolladuras, choque estructural, óxido | -25% a -50% |
+| Excelente | Sin daños, menos de 50.000 km, impecable | Sin descuento |
+| Buen estado | Sin daños visibles o mínimos, hasta ~100.000 km | −3 % a −5 % |
+| Regular | Daños leves visibles y/o más de 100.000 km | −10 % a −20 % |
+| Requiere reparación | Daños graves | −25 % a −50 % |
 
-**Reglas absolutas:**
-- Cualquier daño visible → estado NO puede ser "Excelente"
-- Km > 100.000 → estado NO puede ser "Excelente" ni "Buen estado"
-- Todas las publicaciones se aprueban (`aprobado: true` siempre)
+Reglas: cualquier daño visible impide "Excelente"; más de 100.000 km impide "Excelente" y "Buen estado".
 
 ### Precio de referencia (mercado argentino, USD)
 
 | Segmento | Rango |
 |---|---|
-| Compactos (Fiat Argo, VW Polo, Peugeot 208) 2020+ | $14.000 – $22.000 |
-| Sedanes medianos (Toyota Corolla, VW Vento) 2018+ | $18.000 – $28.000 |
-| SUVs compactas (Renegade, Duster, T-Cross) 2019+ | $20.000 – $32.000 |
-| SUVs medianas (RAV4, Tiguan, Compass) 2018+ | $30.000 – $50.000 |
-| SUVs premium (BMW X3/X5, Audi Q5, Mercedes GLC) 2016+ | $40.000 – $80.000 |
-| Pickups (Ford Ranger, Toyota Hilux) 2018+ | $30.000 – $55.000 |
-| Autos de lujo (BMW Serie 3/5, Mercedes C/E) 2016+ | $35.000 – $70.000 |
-| Económicos (VW Gol, Chevrolet Classic) 2015–2018 | $8.000 – $14.000 |
+| Compactos 2020+ (Argo, Polo, 208) | 14.000 – 22.000 |
+| Sedanes medianos 2018+ (Corolla, Vento) | 18.000 – 28.000 |
+| SUV compactas 2019+ (Renegade, Duster, T-Cross) | 20.000 – 32.000 |
+| SUV medianas 2018+ (RAV4, Tiguan, Compass) | 30.000 – 50.000 |
+| SUV premium 2016+ (X3/X5, GLC, Q5) | 40.000 – 80.000 |
+| Pickups 2018+ (Ranger, Hilux) | 30.000 – 55.000 |
+| Lujo 2016+ (Serie 3/5, Clase C/E) | 35.000 – 70.000 |
+| Económicos 2015–2018 (Gol, Classic) | 8.000 – 14.000 |
 
-**Ajuste por kilometraje:**
-
-| Kilometraje | Ajuste |
-|---|---|
-| < 30.000 km | +8% |
-| 30.001 – 60.000 km | Sin ajuste |
-| 60.001 – 100.000 km | -8% |
-| 100.001 – 150.000 km | -18% |
-| > 150.000 km | -30% |
+Ajuste por kilometraje: menos de 30.000 km +8 %; 30.001–60.000 sin ajuste; 60.001–100.000 −8 %; 100.001–150.000 −18 %; más de 150.000 −30 %.
 
 ---
 
 ## 9. Seguridad
 
-- **Contraseñas:** hash bcrypt (salt rounds: 12)
-- **JWT:** firmado con clave secreta, expiración 7 días
-- **CORS:** acepta orígenes `*.railway.app` y `localhost` en desarrollo
-- **Validación:** `ValidationPipe` global con `whitelist: true`
-- **Autorización:** verificación de propiedad en editar, eliminar y responder
-- **CSP:** Content-Security-Policy en todos los HTMLs del frontend
-- **Storage:** escritura al bucket solo desde el backend con anon key
-- **SQL Injection:** protegido por parámetros nombrados de TypeORM
+**Backend**
+- Contraseñas con bcrypt (12 rondas); el inicio de sesión compara contra un hash ficticio si el email no existe, para no revelar qué cuentas existen.
+- JWT HS256 con expiración de 7 días. La API no arranca si la clave tiene menos de 32 caracteres o falta alguna variable obligatoria.
+- `ValidationPipe` global con `whitelist`, `forbidNonWhitelisted` y `transform`: DTOs tipados en todas las rutas.
+- Límite de pedidos por IP: 100 por minuto en general, 5 por minuto en autenticación y 10 por hora para publicar o editar.
+- `helmet` y CORS restringido a los orígenes de `CORS_URL`.
+- Permisos verificados en el servidor: solo el dueño edita, elimina o responde.
+- Las respuestas no exponen email ni teléfono de otros usuarios.
+- Consultas SQL con parámetros de TypeORM; en las búsquedas se escapan `%` y `_`.
+- Fotos validadas por contenido, sin metadatos (EXIF/GPS), máximo 10 MB.
+- RLS en todas las tablas; el bucket solo admite escritura con la clave secreta del servidor.
+
+**Frontend**
+- Todo texto que viene de la API o del usuario se escapa antes de insertarse como HTML (plantilla `html` en `js/nucleo/dom.js`).
+- Content-Security-Policy en cada página: scripts y estilos solo del propio sitio (Bootstrap servido localmente), sin estilos ni scripts en línea.
+- Cabeceras de seguridad en el hosting (`X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy`, HSTS).
+- El parámetro `volver` del ingreso solo acepta páginas propias (evita redirecciones abiertas).
+- Validación en el navegador con mensajes por campo, además de la validación del servidor.
 
 ---
 
 ## 10. Despliegue
 
-**URLs en producción:**
-- Frontend: https://frontend-production-0959.up.railway.app
-- Backend: https://web2new-production.up.railway.app/api
+El repositorio incluye `render.yaml` (Blueprint de Render) con dos servicios conectados a la rama `develop`:
 
-Ambos servicios están hosteados en **Railway**, conectados al repositorio GitHub con deploy automático en cada push a la rama `develop`.
+- **autopulse-api** — servicio web Node 22 con `rootDir: BACKEND`, chequeo de salud en `/api/salud`.
+- **autopulse-web** — sitio estático con `rootDir: FRONTEND`; en el build, `generar-config.mjs` escribe la URL de la API.
 
 **Servicios externos:**
-- Base de datos: **Supabase** (PostgreSQL 17, región sa-east-1 — São Paulo)
-- Storage de imágenes: **Supabase Storage** (bucket `imagenes-autos`, público)
-- IA: **Groq** (free tier, sin límites estrictos)
+- Base de datos: **Supabase** (PostgreSQL 17, región sa-east-1 — São Paulo).
+- Storage de imágenes: **Supabase Storage** (bucket `imagenes-autos`).
+- IA: **Groq** (cuenta gratuita, ~7.000 tokens de entrada por minuto).
