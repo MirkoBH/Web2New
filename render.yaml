@@ -44,7 +44,8 @@ services:
     branch: develop
     # Genera config-entorno.js con la URL de la API (variable API_URL).
     buildCommand: node generar-config.mjs
-    staticPublishPath: ./FRONTEND
+    # Con rootDir, Render toma esta ruta desde dentro de FRONTEND.
+    staticPublishPath: .
     envVars:
       - key: API_URL
         sync: false
