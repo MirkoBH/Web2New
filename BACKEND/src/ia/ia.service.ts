@@ -1,224 +1,101 @@
-import { Injectable, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  ServiceUnavailableException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import Groq from 'groq-sdk';
+import type {
+  ChatCompletionContentPart,
+  ChatCompletionContentPartImage,
+} from 'groq-sdk/resources/chat/completions';
+import type { VariablesEntorno } from '../configuracion/validar-entorno';
+import type {
+  DatosTasacion,
+  ImagenParaTasar,
+  ResultadoTasacion,
+} from './ia.types';
+import { armarMensajeUsuario, PROMPT_SISTEMA } from './prompt-tasacion';
+import { validarTasacion } from './validar-tasacion';
 
-export interface DatosAnalisisAuto {
-  marca: string;
-  modelo: string;
-  anio: number;
-  kilometraje: number;
-  combustible: string;
-  transmision: string;
-  precio: number;
-  ubicacion: string;
-  descripcion: string;
-  detallesDanios?: string;
-}
-
-export interface ResultadoAnalisisIA {
-  estado: string;
-  puntaje: number;
-  danios: string;
-  rangoPrecioMin: number;
-  rangoPrecioMax: number;
-  resumen: string;
-  aprobado: boolean;
-}
+/** El modelo solo mira las primeras fotos: alcanza para tasar y limita el costo. */
+const MAXIMO_IMAGENES = 4;
+const TIEMPO_MAXIMO_MS = 45_000;
+export const MENSAJE_IA_NO_DISPONIBLE =
+  'El análisis de IA no está disponible, intentá en unos minutos';
 
 @Injectable()
 export class IaService {
   private readonly logger = new Logger(IaService.name);
-  private readonly groq: Groq | null;
+  private readonly groq: Groq;
+  private readonly modelo: string;
 
-  private readonly MODELO_VISION = 'meta-llama/llama-4-scout-17b-16e-instruct';
-  private readonly MODELO_TEXTO  = 'llama-3.3-70b-versatile';
-
-  constructor(private readonly config: ConfigService) {
-    const apiKey = config.get<string>('GROQ_API_KEY');
-    if (apiKey?.trim()) {
-      this.groq = new Groq({ apiKey: apiKey.trim() });
-      this.logger.log(`✅ Groq inicializado (key: ...${apiKey.slice(-6)})`);
-    } else {
-      this.groq = null;
-      this.logger.warn('⚠️  GROQ_API_KEY no configurada — se usará análisis simulado');
-    }
+  constructor(configuracion: ConfigService<VariablesEntorno, true>) {
+    this.groq = new Groq({
+      apiKey: configuracion.get('GROQ_API_KEY', { infer: true }),
+      timeout: TIEMPO_MAXIMO_MS,
+      maxRetries: 1,
+    });
+    this.modelo = configuracion.get('GROQ_MODELO', { infer: true });
   }
 
-  // ── Analizar con buffers de imágenes (antes de guardar en DB) ─
-  async analizarConImagenes(
-    datos: DatosAnalisisAuto,
-    imagenes: Express.Multer.File[],
-  ): Promise<ResultadoAnalisisIA> {
-    if (!this.groq) {
-      this.logger.warn('Groq no disponible — usando análisis simulado');
-      return this.analisisSimulado(datos);
-    }
+  /**
+   * Tasa el vehículo a partir de sus datos y fotos.
+   * Si la IA falla o responde algo inválido, lanza 503: la publicación no se
+   * guarda sin un análisis real.
+   */
+  async tasar(
+    datos: DatosTasacion,
+    imagenes: ImagenParaTasar[],
+  ): Promise<ResultadoTasacion> {
+    const contenido: ChatCompletionContentPart[] = [
+      ...imagenes.slice(0, MAXIMO_IMAGENES).map(aParteImagen),
+      { type: 'text', text: armarMensajeUsuario(datos) },
+    ];
 
+    let respuesta: string;
     try {
-      this.logger.log(`Analizando: ${datos.marca} ${datos.modelo} ${datos.anio} | Imágenes: ${imagenes.length}`);
-      const resultado = await this.llamarGroq(datos, imagenes);
-      this.logger.log(`✅ ${resultado.estado} | Puntaje: ${resultado.puntaje} | USD ${resultado.rangoPrecioMin}–${resultado.rangoPrecioMax} | Aprobado: ${resultado.aprobado}`);
-      return resultado;
+      const completado = await this.groq.chat.completions.create({
+        model: this.modelo,
+        temperature: 0.1,
+        max_completion_tokens: 800,
+        response_format: { type: 'json_object' },
+        messages: [
+          { role: 'system', content: PROMPT_SISTEMA },
+          { role: 'user', content: contenido },
+        ],
+      });
+      respuesta = completado.choices[0]?.message?.content ?? '';
     } catch (error) {
-      this.logger.error(`❌ Error Groq: ${error?.message}`);
-      return this.analisisSimulado(datos);
-    }
-  }
-
-  private async llamarGroq(
-    datos: DatosAnalisisAuto,
-    imagenes: Express.Multer.File[],
-  ): Promise<ResultadoAnalisisIA> {
-    const tieneImagenes = imagenes.length > 0;
-    const modelo = tieneImagenes ? this.MODELO_VISION : this.MODELO_TEXTO;
-
-    // Convertir buffers a base64 para enviar directamente al modelo
-    const contenidoUsuario: any[] = [];
-
-    if (tieneImagenes) {
-      for (const archivo of imagenes.slice(0, 4)) {
-        const base64 = archivo.buffer.toString('base64');
-        const mimeType = archivo.mimetype;
-        contenidoUsuario.push({
-          type: 'image_url',
-          image_url: {
-            url: `data:${mimeType};base64,${base64}`,
-          },
-        });
-      }
+      this.logger.error(`Groq no respondió: ${describirError(error)}`);
+      throw new ServiceUnavailableException(MENSAJE_IA_NO_DISPONIBLE);
     }
 
-    contenidoUsuario.push({
-      type: 'text',
-      text: `${tieneImagenes ? 'Analizá las imágenes y los datos del vehículo:' : 'Analizá los datos del vehículo:'}
-
-DATOS:
-- Marca y modelo: ${datos.marca} ${datos.modelo}
-- Año: ${datos.anio}
-- Kilometraje: ${datos.kilometraje} km
-- Combustible: ${datos.combustible}
-- Transmisión: ${datos.transmision}
-- Precio pedido por el vendedor: USD ${datos.precio}
-- Ubicación: ${datos.ubicacion}
-- Descripción: "${datos.descripcion}"
-- Daños declarados: "${datos.detallesDanios || 'Ninguno'}"
-${tieneImagenes ? '\nExaminá cada foto buscando: rayones, abolladuras, golpes, óxido, vidrios rotos, pintura en mal estado, o daños no declarados.' : ''}
-
-Completá el JSON.`,
-    });
-
-    const completion = await this.groq!.chat.completions.create({
-      model: modelo,
-      temperature: 0.1,
-      max_tokens: 600,
-      response_format: { type: 'json_object' },
-      messages: [
-        {
-          role: 'system',
-          content: `Sos un perito tasador experto en el mercado de autos usados de Argentina.
-Analizás vehículos y devolvés una tasación profesional basada en el valor real de mercado argentino.
-
-PRECIOS DE REFERENCIA EN ARGENTINA (USD, mercado actual):
-- Autos compactos (Fiat Argo, VW Polo, Peugeot 208) 2020+: USD 14.000–22.000
-- Sedanes medianos (Toyota Corolla, VW Vento) 2018+: USD 18.000–28.000
-- SUVs compactas (Jeep Renegade, Renault Duster, VW T-Cross) 2019+: USD 20.000–32.000
-- SUVs medianas (Toyota RAV4, VW Tiguan, Jeep Compass) 2018+: USD 30.000–50.000
-- SUVs premium (BMW X3/X5, Mercedes GLC, Audi Q5) 2016+: USD 40.000–80.000
-- Pickups (Ford Ranger, Toyota Hilux) 2018+: USD 30.000–55.000
-- Autos de lujo (BMW Serie 3/5, Mercedes Clase C/E) 2016+: USD 35.000–70.000
-- Autos económicos (VW Gol, Chevrolet Classic) 2015–2018: USD 8.000–14.000
-
-AJUSTE POR KILOMETRAJE:
-- Menos de 30.000 km: +8%
-- 30.001–60.000 km: sin ajuste
-- 60.001–100.000 km: -8%
-- 100.001–150.000 km: -18%
-- Más de 150.000 km: -30%
-
-CRITERIOS DE ESTADO Y PRECIO (aplicar con precisión):
-
-"Excelente":
-- Sin daños de ningún tipo (ni rayones, ni golpes, ni deformaciones)
-- Kilometraje bajo (menos de 50.000 km)
-- Vehículo visualmente impecable en todas las fotos
-- Sin descuento al precio base de mercado
-
-"Buen estado":
-- Sin daños visibles o daños absolutamente mínimos e imperceptibles
-- Kilometraje estándar o moderadamente alto (hasta ~100.000 km)
-- Aspecto general cuidado
-- Sin descuento o descuento mínimo (-3% a -5%)
-
-"Regular":
-- Daños leves visibles: rayones, pequeños golpes, desgaste de pintura
-- Y/O kilometraje muy alto (más de 100.000 km)
-- Funcionamiento correcto pero con desgaste notorio
-- Descuento moderado (-10% a -20%)
-
-"Requiere reparacion":
-- Daños graves: abolladuras importantes, choque estructural, óxido extendido,
-  vidrios dañados, múltiples paneles afectados
-- El vehículo necesita reparación antes de uso normal
-- Descuento significativo (-25% a -50%)
-
-REGLA IMPORTANTE: Si hay cualquier daño visible en las fotos (aunque sea leve),
-el estado NO puede ser "Excelente". Si el kilometraje supera 100.000 km,
-el estado NO puede ser "Excelente" ni "Buen estado".
-
-TODAS LAS PUBLICACIONES SE APRUEBAN. El campo aprobado siempre es true.
-
-IMPORTANTE: El precio sugerido debe ser el VALOR REAL de mercado en Argentina,
-ajustado según el estado real del vehículo.
-
-Devolvés SIEMPRE este JSON sin texto adicional:
-{
-  "estado": "Excelente" | "Buen estado" | "Regular" | "Requiere reparacion",
-  "puntaje": número del 1.0 al 10.0,
-  "danios": "descripción detallada de daños visibles o Sin daños detectados",
-  "rangoPrecioMin": precio mínimo justo en USD ajustado por daños,
-  "rangoPrecioMax": precio máximo justo en USD ajustado por daños,
-  "resumen": "2-3 oraciones explicando el estado, los daños detectados y el precio justo",
-  "aprobado": true
-}`,
-        },
-        {
-          role: 'user',
-          content: contenidoUsuario,
-        },
-      ],
-    });
-
-    const texto = completion.choices[0]?.message?.content?.trim() || '{}';
-    this.logger.log(`Respuesta: ${texto.substring(0, 200)}`);
-    const parsed = JSON.parse(texto);
-
-    return {
-      estado:         parsed.estado         || 'Regular',
-      puntaje:        Number(parsed.puntaje) || 6,
-      danios:         parsed.danios          || 'No determinado',
-      rangoPrecioMin: Number(parsed.rangoPrecioMin) || Math.round(datos.precio * 0.85),
-      rangoPrecioMax: Number(parsed.rangoPrecioMax) || Math.round(datos.precio * 1.10),
-      resumen:        parsed.resumen         || 'Análisis completado.',
-      aprobado:       parsed.aprobado !== false,
-    };
+    const resultado = validarTasacion(leerJson(respuesta));
+    if (!resultado) {
+      this.logger.error(`Respuesta de IA inválida: ${respuesta.slice(0, 300)}`);
+      throw new ServiceUnavailableException(MENSAJE_IA_NO_DISPONIBLE);
+    }
+    return resultado;
   }
+}
 
-  private analisisSimulado(datos: DatosAnalisisAuto): ResultadoAnalisisIA {
-    const puntaje = parseFloat((Math.random() * 3 + 6.5).toFixed(1));
-    let estado: string;
-    if (puntaje >= 9)        estado = 'Excelente';
-    else if (puntaje >= 7.5) estado = 'Buen estado';
-    else if (puntaje >= 6)   estado = 'Regular';
-    else                     estado = 'Requiere reparacion';
+function aParteImagen(imagen: ImagenParaTasar): ChatCompletionContentPartImage {
+  const url =
+    imagen.tipo === 'url'
+      ? imagen.url
+      : `data:${imagen.mime};base64,${imagen.datos.toString('base64')}`;
+  return { type: 'image_url', image_url: { url } };
+}
 
-    return {
-      estado,
-      puntaje,
-      danios:         'Análisis simulado — configurá GROQ_API_KEY para análisis real.',
-      rangoPrecioMin: Math.round(datos.precio * 0.9),
-      rangoPrecioMax: Math.round(datos.precio * 1.08),
-      resumen:        `Vehículo ${datos.marca} ${datos.modelo} analizado en modo de simulación.`,
-      aprobado:       true, // siempre se publica
-    };
+function leerJson(texto: string): unknown {
+  try {
+    return JSON.parse(texto);
+  } catch {
+    return null;
   }
+}
+
+function describirError(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
 }

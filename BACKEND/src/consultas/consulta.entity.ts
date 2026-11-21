@@ -1,35 +1,50 @@
-import { Column, CreateDateColumn, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
-import { Usuario } from '../users/usuario.entity';
-import { Auto } from '../cars/auto.entity';
+import {
+  Column,
+  CreateDateColumn,
+  Entity,
+  Index,
+  JoinColumn,
+  ManyToOne,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
+import { Auto } from '../autos/auto.entity';
+import { Usuario } from '../usuarios/usuario.entity';
 
+/** Pregunta pública de un comprador sobre un auto, con la respuesta del vendedor. */
 @Entity('consultas')
+@Index(['autoId', 'compradorId'], { unique: true })
 export class Consulta {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @ManyToOne(() => Auto, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'auto_id' })
+  @ManyToOne(() => Auto, { onDelete: 'CASCADE', nullable: false })
+  @JoinColumn()
   auto: Auto;
 
-  @Column({ name: 'auto_id' })
+  @Column({ type: 'uuid' })
   autoId: string;
 
-  @ManyToOne(() => Usuario, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'comprador_id' })
+  @ManyToOne(() => Usuario, { onDelete: 'CASCADE', nullable: false })
+  @JoinColumn()
   comprador: Usuario;
 
-  @Column({ name: 'comprador_id' })
+  @Column({ type: 'uuid' })
   compradorId: string;
 
-  @Column({ name: 'vendedor_id' })
+  /** Se guarda para listar rápido las consultas recibidas por cada vendedor. */
+  @ManyToOne(() => Usuario, { onDelete: 'CASCADE', nullable: false })
+  @JoinColumn()
+  vendedor: Usuario;
+
+  @Column({ type: 'uuid' })
   vendedorId: string;
 
   @Column({ type: 'text' })
   pregunta: string;
 
   @Column({ type: 'text', nullable: true })
-  respuesta: string;
+  respuesta: string | null;
 
-  @CreateDateColumn()
-  createdAt: Date;
+  @CreateDateColumn({ type: 'timestamptz' })
+  creadoEn: Date;
 }

@@ -1,48 +1,48 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { APP_GUARD } from '@nestjs/core';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { ServeStaticModule } from '@nestjs/serve-static';
-import { join } from 'path';
-import { AuthModule } from './auth/auth.module';
-import { UsersModule } from './users/users.module';
-import { CarsModule } from './cars/cars.module';
-import { IaModule } from './ia/ia.module';
+import { AutenticacionModule } from './autenticacion/autenticacion.module';
+import { AutosModule } from './autos/autos.module';
+import { EstrategiaNombresSnake } from './comun/base-de-datos/estrategia-nombres-snake';
+import {
+  validarEntorno,
+  VariablesEntorno,
+} from './configuracion/validar-entorno';
 import { ConsultasModule } from './consultas/consultas.module';
+import { SaludModule } from './salud/salud.module';
+import { UsuariosModule } from './usuarios/usuarios.module';
 
 @Module({
   imports: [
-    // ── Variables de entorno ───────────────────────────────────
-    ConfigModule.forRoot({ isGlobal: true, envFilePath: '.env' }),
+    ConfigModule.forRoot({ isGlobal: true, validate: validarEntorno }),
 
-    // ── Base de datos (TypeORM + Supabase PostgreSQL) ──────────
     TypeOrmModule.forRootAsync({
-      imports: [ConfigModule],
       inject: [ConfigService],
-      useFactory: (config: ConfigService) => ({
+      useFactory: (configuracion: ConfigService<VariablesEntorno, true>) => ({
         type: 'postgres',
-        url: config.get<string>('DATABASE_URL'),
-        ssl:
-          config.get<string>('DB_SSL') === 'true'
-            ? { rejectUnauthorized: false }
-            : false,
+        url: configuracion.get('DATABASE_URL', { infer: true }),
+        ssl: configuracion.get('DB_SSL', { infer: true })
+          ? { rejectUnauthorized: false }
+          : false,
         autoLoadEntities: true,
-        synchronize: true,
-        logging: false,
+        // El esquema se maneja con los scripts de BACKEND/base-de-datos,
+        // nunca automáticamente: sincronizar en producción puede borrar datos.
+        synchronize: false,
+        namingStrategy: new EstrategiaNombresSnake(),
       }),
     }),
 
-    // ── Servir imágenes subidas como archivos estáticos ────────
-    ServeStaticModule.forRoot({
-      rootPath: join(process.cwd(), 'uploads'),
-      serveRoot: '/uploads',
-    }),
+    // Límite general: 100 pedidos por minuto por IP.
+    ThrottlerModule.forRoot([{ ttl: 60_000, limit: 100 }]),
 
-    // ── Módulos del dominio ────────────────────────────────────
-    AuthModule,
-    UsersModule,
-    CarsModule,
-    IaModule,
+    AutenticacionModule,
+    UsuariosModule,
+    AutosModule,
     ConsultasModule,
+    SaludModule,
   ],
+  providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
 })
 export class AppModule {}

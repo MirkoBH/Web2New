@@ -1,56 +1,38 @@
+import { Logger, ValidationPipe } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
-import { ValidationPipe } from '@nestjs/common';
+import type { NestExpressApplication } from '@nestjs/platform-express';
+import helmet from 'helmet';
 import { AppModule } from './app.module';
+import type { VariablesEntorno } from './configuracion/validar-entorno';
 
-async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+async function iniciar(): Promise<void> {
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+  const configuracion =
+    app.get<ConfigService<VariablesEntorno, true>>(ConfigService);
 
-  // ── CORS ──────────────────────────────────────────────────────
-  const corsOrigen = process.env.CORS_URL || 'http://localhost:8080';
-
+  // Render (y cualquier proxy) manda la IP real en X-Forwarded-For;
+  // sin esto el límite de pedidos contaría a todos como la misma IP.
+  app.set('trust proxy', 1);
+  app.use(helmet());
   app.enableCors({
-    origin: (origin, callback) => {
-      // Permitir requests sin origin (Postman, mobile apps)
-      if (!origin) return callback(null, true);
-
-      const permitidos = [
-        corsOrigen,
-        'http://localhost:8080',
-        'http://localhost:5500',
-        'http://127.0.0.1:5500',
-        'http://localhost:3001',
-      ];
-
-      // Permitir cualquier subdominio de railway.app
-      const esRailway = origin.endsWith('.railway.app');
-      const esPermitido = permitidos.includes(origin) || esRailway;
-
-      if (esPermitido) {
-        callback(null, true);
-      } else {
-        callback(new Error(`CORS: origen no permitido — ${origin}`));
-      }
-    },
-    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    origin: configuracion.get('CORS_URL', { infer: true }),
+    methods: ['GET', 'POST', 'PATCH', 'DELETE'],
     allowedHeaders: ['Content-Type', 'Authorization'],
-    credentials: true,
   });
-
-  // ── Validación global ──────────────────────────────────────────
+  app.setGlobalPrefix('api');
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
       forbidNonWhitelisted: true,
       transform: true,
-      transformOptions: { enableImplicitConversion: true },
     }),
   );
+  app.enableShutdownHooks();
 
-  app.setGlobalPrefix('api');
-
-  const puerto = process.env.PORT || 3000;
+  const puerto = configuracion.get('PORT', { infer: true });
   await app.listen(puerto, '0.0.0.0');
-  console.log(`🚀 AutoPulse API corriendo en: http://0.0.0.0:${puerto}/api`);
+  new Logger('Inicio').log(`API escuchando en el puerto ${puerto}`);
 }
 
-bootstrap();
+void iniciar();

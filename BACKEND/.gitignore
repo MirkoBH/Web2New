@@ -9,8 +9,6 @@ dist/
 .env.local
 .env.production
 
-# Uploads locales
-uploads/
 
 # IDE
 .vscode/
