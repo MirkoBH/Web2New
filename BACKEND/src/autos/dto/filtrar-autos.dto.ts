@@ -11,7 +11,9 @@ import {
   Min,
 } from 'class-validator';
 import { limpiarTexto } from '../../comun/transformaciones';
+import { AnioMaximo } from '../../comun/validadores/anio-maximo';
 import { Combustible, Transmision } from '../auto.entity';
+import { ANIO_MINIMO } from './crear-auto.dto';
 
 export const ORDENES = [
   'reciente',
@@ -62,13 +64,15 @@ export class FiltrarAutosDto {
   @IsOptional()
   @Type(() => Number)
   @IsInt()
-  @Min(1900)
+  @Min(ANIO_MINIMO, { message: `El año no puede ser menor a ${ANIO_MINIMO}` })
+  @AnioMaximo()
   anioMin?: number;
 
   @IsOptional()
   @Type(() => Number)
   @IsInt()
-  @Max(2100)
+  @Min(ANIO_MINIMO, { message: `El año no puede ser menor a ${ANIO_MINIMO}` })
+  @AnioMaximo()
   anioMax?: number;
 
   @IsOptional()

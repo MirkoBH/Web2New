@@ -9,6 +9,10 @@ iniciarPagina({ actual: 'autos' });
 
 const formulario = $('#filtros');
 const PRECIO_TOPE = 100000;
+const ANIO_MINIMO = 1950;
+// Igual que la API: hasta el año actual + 1 (modelos del año siguiente).
+const ANIO_MAXIMO = new Date().getFullYear() + 1;
+for (const campo of [formulario.anioMin, formulario.anioMax]) campo.max = String(ANIO_MAXIMO);
 const CAMPOS = ['texto', 'marca', 'modelo', 'precioMin', 'precioMax', 'anioMin', 'anioMax', 'kmMin', 'kmMax', 'ubicacion', 'combustible', 'transmision', 'orden'];
 let pagina = Number(new URLSearchParams(location.search).get('pagina')) || 1;
 
@@ -114,6 +118,12 @@ function leerFiltros() {
 }
 
 function validarRangos(filtros) {
+  for (const clave of ['anioMin', 'anioMax']) {
+    const anio = Number(filtros[clave]);
+    if (filtros[clave] && (!Number.isInteger(anio) || anio < ANIO_MINIMO || anio > ANIO_MAXIMO)) {
+      return `El año tiene que estar entre ${ANIO_MINIMO} y ${ANIO_MAXIMO}.`;
+    }
+  }
   const pares = [['anioMin', 'anioMax', 'año'], ['kmMin', 'kmMax', 'kilometraje']];
   for (const [desde, hasta, nombre] of pares) {
     if (filtros[desde] && filtros[hasta] && Number(filtros[desde]) > Number(filtros[hasta])) {

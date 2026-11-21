@@ -11,10 +11,10 @@ import {
   MinLength,
 } from 'class-validator';
 import { limpiarTexto } from '../../comun/transformaciones';
+import { AnioMaximo } from '../../comun/validadores/anio-maximo';
 import { Combustible, Transmision } from '../auto.entity';
 
-const ANIO_MINIMO = 1950;
-const ANIO_MAXIMO = new Date().getFullYear() + 1;
+export const ANIO_MINIMO = 1950;
 
 /**
  * Los datos llegan como `multipart/form-data` (junto con las fotos), por eso
@@ -41,8 +41,8 @@ export class CrearAutoDto {
 
   @Type(() => Number)
   @IsInt()
-  @Min(ANIO_MINIMO)
-  @Max(ANIO_MAXIMO)
+  @Min(ANIO_MINIMO, { message: `El año no puede ser menor a ${ANIO_MINIMO}` })
+  @AnioMaximo()
   anio: number;
 
   @Type(() => Number)
