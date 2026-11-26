@@ -1,0 +1,27 @@
+import { registerDecorator, ValidationOptions } from 'class-validator';
+
+/** Año más nuevo aceptado: el actual + 1 (a fin de año ya se venden modelos del siguiente). */
+export function maxAllowedYear(): number {
+  return new Date().getFullYear() + 1;
+}
+
+/**
+ * Valida que el año no supere el año actual + 1. Se calcula en cada
+ * validación (no al arrancar), así sigue siendo correcto después del 1/1
+ * aunque el servidor no se reinicie.
+ */
+export function MaxYear(options?: ValidationOptions): PropertyDecorator {
+  return (target: object, propertyKey: string | symbol) => {
+    registerDecorator({
+      name: 'anioMaximo',
+      target: target.constructor,
+      propertyName: String(propertyKey),
+      options: options,
+      validator: {
+        validate: (value: unknown) =>
+          typeof value === 'number' && value <= maxAllowedYear(),
+        defaultMessage: () => `El año no puede ser mayor a ${maxAllowedYear()}`,
+      },
+    });
+  };
+}

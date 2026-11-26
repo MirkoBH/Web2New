@@ -13,20 +13,20 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..700&family=Instrument+Sans:wght@400..600&display=swap">
   <link rel="stylesheet" href="vendor/bootstrap/bootstrap.min.css">
-  <link rel="stylesheet" href="css/estilos.css">
-  <script src="config-entorno.js"></script>
+  <link rel="stylesheet" href="css/styles.css">
+  <script src="env-config.js"></script>
   <script src="vendor/bootstrap/bootstrap.bundle.min.js" defer></script>
-  <script type="module" src="js/paginas/ingreso.js"></script>
+  <script type="module" src="js/pages/login.js"></script>
 </head>
 <body>
-  <div id="encabezado"></div>
-  <main id="contenido" class="pagina">
+  <div id="header"></div>
+  <main id="content" class="page">
     <div class="wrap">
-      <div class="form-angosto">
+      <div class="form-narrow">
         <h1 class="h2">Ingresar</h1>
-        <p class="muted mt-3 mb-5">¿No tenés cuenta? <a class="link" href="registro.html">Crear cuenta</a></p>
-        <div id="avisos"></div>
-        <form id="formulario" novalidate>
+        <p class="muted mt-3 mb-5">¿No tenés cuenta? <a class="link" href="register.html">Crear cuenta</a></p>
+        <div id="alerts"></div>
+        <form id="form" novalidate>
           <div class="mb-4">
             <label class="form-label" for="email">Email</label>
             <input class="form-control" id="email" name="email" type="email" required maxlength="120" autocomplete="email" aria-describedby="email-error" data-error="Escribí un email con @, por ejemplo nombre@mail.com.">
@@ -41,12 +41,12 @@
             <p class="invalid-feedback" id="password-error"></p>
           </div>
 
-          <button class="btn-ap btn-ap--primario w-100" type="submit">Ingresar</button>
-          <p class="estado-form" id="estado" role="status"></p>
+          <button class="btn-ap btn-ap--primary w-100" type="submit">Ingresar</button>
+          <p class="form-status" id="status" role="status"></p>
         </form>
       </div>
     </div>
   </main>
-  <div id="pie"></div>
+  <div id="footer"></div>
 </body>
 </html>

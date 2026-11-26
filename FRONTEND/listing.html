@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="es-AR" data-bs-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob: https://*.supabase.co; connect-src 'self' http://localhost:3000 https://*.onrender.com; base-uri 'self'; form-action 'self'; object-src 'none'">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+  <title>Autos usados en venta: AutoPulse</title>
+  <meta name="description" content="Buscá autos usados en Argentina por marca, modelo, precio, año, kilometraje y provincia, con la tasación por IA de cada uno.">
+  <meta name="theme-color" content="#0e0e0f">
+  <link rel="icon" href="img/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..700&family=Instrument+Sans:wght@400..600&display=swap">
+  <link rel="stylesheet" href="vendor/bootstrap/bootstrap.min.css">
+  <link rel="stylesheet" href="css/styles.css">
+  <script src="env-config.js"></script>
+  <script src="vendor/bootstrap/bootstrap.bundle.min.js" defer></script>
+  <script type="module" src="js/pages/listing.js"></script>
+</head>
+<body>
+  <div id="header"></div>
+  <main id="content" class="page">
+    <div class="wrap">
+      <div class="page__header">
+        <div>
+          <h1 class="h2">Autos usados en venta</h1>
+          <p class="muted" id="results-summary" aria-live="polite">Buscando autos…</p>
+        </div>
+        <div>
+          <label class="form-label" for="sort">Ordenar por</label>
+          <select class="form-select" id="sort" name="sort" form="filters">
+            <option value="newest">Más recientes</option>
+            <option value="price_asc">Menor precio</option>
+            <option value="price_desc">Mayor precio</option>
+            <option value="mileage_asc">Menor kilometraje</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="row g-5">
+        <aside class="col-lg-3" aria-labelledby="filters-title">
+          <form class="filters" id="filters" role="search" novalidate>
+            <div class="filters__title">
+              <h2 class="h3" id="filters-title">Filtros</h2>
+              <button type="button" class="btn-ap btn-ap--secondary btn-ap--small filters-toggle" id="toggle-filters"
+                aria-expanded="false" aria-controls="filters-body">Mostrar filtros</button>
+            </div>
+            <div class="filters__body" id="filters-body">
+
+            <div class="filters__group">
+              <label class="form-label" for="f-search">Marca o modelo</label>
+              <input class="form-control" id="f-search" name="search" type="search" maxlength="80" placeholder="Ej.: Toyota Corolla">
+            </div>
+
+            <div class="filters__group">
+              <label class="form-label" for="f-brand">Marca</label>
+              <input class="form-control" id="f-brand" name="brand" type="text" maxlength="60">
+              <label class="form-label mt-3" for="f-model">Modelo</label>
+              <input class="form-control" id="f-model" name="model" type="text" maxlength="80">
+            </div>
+
+            <div class="filters__group">
+              <span class="form-label d-block" id="price-label">Precio (USD)</span>
+              <div class="slider__values"><span id="min-price-text">USD 0</span><span id="max-price-text">Sin límite</span></div>
+              <label class="visually-hidden" for="f-min-price">Precio mínimo</label>
+              <input class="slider" id="f-min-price" name="minPrice" type="range" min="0" max="100000" step="1000" value="0" aria-describedby="price-label">
+              <label class="visually-hidden" for="f-max-price">Precio máximo</label>
+              <input class="slider" id="f-max-price" name="maxPrice" type="range" min="0" max="100000" step="1000" value="100000" aria-describedby="price-label">
+            </div>
+
+            <div class="filters__group">
+              <span class="form-label d-block">Año</span>
+              <div class="range-fields">
+                <div><label class="visually-hidden" for="f-min-year">Año desde</label><input class="form-control" id="f-min-year" name="minYear" type="number" min="1950" inputmode="numeric" placeholder="Desde"></div>
+                <div><label class="visually-hidden" for="f-max-year">Año hasta</label><input class="form-control" id="f-max-year" name="maxYear" type="number" min="1950" inputmode="numeric" placeholder="Hasta"></div>
+              </div>
+            </div>
+
+            <div class="filters__group">
+              <span class="form-label d-block">Kilometraje</span>
+              <div class="range-fields">
+                <div><label class="visually-hidden" for="f-min-km">Kilometraje desde</label><input class="form-control" id="f-min-km" name="minKm" type="number" min="0" step="1000" inputmode="numeric" placeholder="Desde"></div>
+                <div><label class="visually-hidden" for="f-max-km">Kilometraje hasta</label><input class="form-control" id="f-max-km" name="maxKm" type="number" min="0" step="1000" inputmode="numeric" placeholder="Hasta"></div>
+              </div>
+            </div>
+
+            <div class="filters__group">
+              <label class="form-label" for="f-location">Provincia</label>
+              <select class="form-select" id="f-location" name="location"><option value="">Todas</option></select>
+            </div>
+
+            <div class="filters__group">
+              <label class="form-label" for="f-fuel">Combustible</label>
+              <select class="form-select" id="f-fuel" name="fuel">
+                <option value="">Todos</option><option value="Nafta">Nafta</option><option value="Diesel">Diésel</option><option value="Hibrido">Híbrido</option><option value="Electrico">Eléctrico</option>
+              </select>
+            </div>
+
+            <fieldset class="filters__group">
+              <legend class="form-label">Transmisión</legend>
+              <div class="segmented">
+                <input type="radio" name="transmission" id="t-all" value="" checked><label for="t-all">Todas</label>
+                <input type="radio" name="transmission" id="t-manual" value="Manual"><label for="t-manual">Manual</label>
+                <input type="radio" name="transmission" id="t-automatic" value="Automatico"><label for="t-automatic">Automático</label>
+              </div>
+            </fieldset>
+
+            <p class="invalid-feedback d-block" id="filters-error" role="alert"></p>
+            <button class="btn-ap btn-ap--primary w-100 mt-3" type="submit">Buscar autos</button>
+            <button type="reset" class="btn-ap btn-ap--secondary w-100 mt-2">Limpiar filtros</button>
+            </div>
+          </form>
+        </aside>
+
+        <section class="col-lg-9" aria-label="Resultados">
+          <div id="alerts"></div>
+          <div class="row g-4" id="results"></div>
+          <nav class="pager" id="pager" aria-label="Páginas de resultados" hidden>
+            <button type="button" class="btn-ap btn-ap--secondary" data-page="previous">Anterior</button>
+            <span class="muted" id="current-page"></span>
+            <button type="button" class="btn-ap btn-ap--secondary" data-page="next">Siguiente</button>
+          </nav>
+        </section>
+      </div>
+    </div>
+  </main>
+  <div id="footer"></div>
+</body>
+</html>

@@ -13,7 +13,7 @@ services:
     # --include=dev: el build necesita @nestjs/cli aunque NODE_ENV sea production.
     buildCommand: npm ci --include=dev && npm run build
     startCommand: npm run start:prod
-    healthCheckPath: /api/salud
+    healthCheckPath: /api/health
     envVars:
       - key: NODE_VERSION
         value: "22"
@@ -33,7 +33,7 @@ services:
         sync: false
       - key: GROQ_API_KEY
         sync: false
-      - key: GROQ_MODELO
+      - key: GROQ_MODEL
         value: qwen/qwen3.8-27b
 
   # Frontend estático (HTML, CSS y JavaScript)
@@ -42,8 +42,8 @@ services:
     runtime: static
     rootDir: FRONTEND
     branch: develop
-    # Genera config-entorno.js con la URL de la API (variable API_URL).
-    buildCommand: node generar-config.mjs
+    # Genera env-config.js con la URL de la API (variable API_URL).
+    buildCommand: node generate-config.mjs
     # Con rootDir, Render toma esta ruta desde dentro de FRONTEND.
     staticPublishPath: .
     envVars:

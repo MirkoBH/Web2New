@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="es-AR" data-bs-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob: https://*.supabase.co; connect-src 'self' http://localhost:3000 https://*.onrender.com; base-uri 'self'; form-action 'self'; object-src 'none'">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+  <title>Publicar mi auto: AutoPulse</title>
+  <meta name="description" content="Publicá tu auto usado con fotos y recibí al instante una tasación por IA con el estado y un rango de precio.">
+  <meta name="theme-color" content="#0e0e0f">
+  <link rel="icon" href="img/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..700&family=Instrument+Sans:wght@400..600&display=swap">
+  <link rel="stylesheet" href="vendor/bootstrap/bootstrap.min.css">
+  <link rel="stylesheet" href="css/styles.css">
+  <script src="env-config.js"></script>
+  <script src="vendor/bootstrap/bootstrap.bundle.min.js" defer></script>
+  <script type="module" src="js/pages/publish.js"></script>
+</head>
+<body>
+  <div id="header"></div>
+  <main id="content" class="page">
+    <div class="wrap">
+      <div class="row">
+        <div class="col-lg-8">
+          <h1 class="h2">Publicar mi auto</h1>
+          <p class="lead-text muted mt-3 mb-5 measure">Al publicar, una IA revisa las fotos y los datos y agrega al aviso el estado del auto y un rango de precio de mercado.</p>
+          <div id="alerts"></div>
+          <form id="form" class="row g-4" novalidate>
+            <div class="col-md-6">
+              <label class="form-label" for="brand">Marca</label>
+              <input class="form-control" id="brand" name="brand" type="text" required minlength="2" maxlength="60" aria-describedby="brand-error" data-error="Elegí o escribí la marca.">
+              
+              <p class="invalid-feedback" id="brand-error"></p>
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label" for="model">Modelo</label>
+              <input class="form-control" id="model" name="model" type="text" required maxlength="80" aria-describedby="model-error" data-error="Elegí o escribí el modelo.">
+              
+              <p class="invalid-feedback" id="model-error"></p>
+            </div>
+
+            <div class="col-6 col-md-4">
+              <label class="form-label" for="year">Año</label>
+              <input class="form-control" id="year" name="year" type="number" required min="1950" max="2027" inputmode="numeric" aria-describedby="year-error" data-error="Escribí un año entre 1950 y 2027.">
+              
+              <p class="invalid-feedback" id="year-error"></p>
+            </div>
+
+            <div class="col-6 col-md-4">
+              <label class="form-label" for="mileage">Kilometraje</label>
+              <input class="form-control" id="mileage" name="mileage" type="number" required min="0" max="2000000" step="1" inputmode="numeric" aria-describedby="mileage-error" data-error="Escribí los kilómetros, sin puntos.">
+              
+              <p class="invalid-feedback" id="mileage-error"></p>
+            </div>
+
+            <div class="col-md-4">
+              <label class="form-label" for="color">Color (opcional)</label>
+              <input class="form-control" id="color" name="color" type="text" maxlength="40" aria-describedby="color-error" data-error="">
+              
+              <p class="invalid-feedback" id="color-error"></p>
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label" for="fuel">Combustible</label>
+              <select class="form-select" id="fuel" name="fuel" required aria-describedby="fuel-error" data-error="Elegí el combustible."><option value="">Elegí uno</option><option value="Nafta">Nafta</option><option value="Diesel">Diésel</option><option value="Hibrido">Híbrido</option><option value="Electrico">Eléctrico</option></select>
+              
+              <p class="invalid-feedback" id="fuel-error"></p>
+            </div>
+
+            <fieldset class="col-md-6">
+              <legend class="form-label">Transmisión</legend>
+              <div class="segmented">
+                <input type="radio" name="transmission" id="t-manual" value="Manual" checked><label for="t-manual">Manual</label>
+                <input type="radio" name="transmission" id="t-automatic" value="Automatico"><label for="t-automatic">Automático</label>
+              </div>
+            </fieldset>
+            <div class="col-md-6">
+              <label class="form-label" for="price">Precio (USD)</label>
+              <input class="form-control" id="price" name="price" type="number" required min="1" max="99999999" step="1" inputmode="numeric" aria-describedby="price-error" data-error="Escribí el precio en dólares, sin puntos.">
+              
+              <p class="invalid-feedback" id="price-error"></p>
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label" for="location">Provincia</label>
+              <select class="form-select" id="location" name="location" required aria-describedby="location-error" data-error="Elegí la provincia."><option value="">Elegí una</option></select>
+              
+              <p class="invalid-feedback" id="location-error"></p>
+            </div>
+
+            <div class="col-12">
+              <label class="form-label" for="description">Descripción</label>
+              <textarea class="form-control" id="description" name="description" rows="4" required minlength="10" maxlength="3000" aria-describedby="description-error description-help" data-error="Contá cómo está el auto en al menos 10 caracteres."></textarea>
+              <p class="form-text" id="description-help">Estado general, mantenimiento, equipamiento, dueños.</p>
+              <p class="invalid-feedback" id="description-error"></p>
+            </div>
+
+            <div class="col-12">
+              <label class="form-label" for="damageDetails">Daños conocidos (opcional)</label>
+              <textarea class="form-control" id="damageDetails" name="damageDetails" rows="2" maxlength="1000" aria-describedby="damageDetails-error damageDetails-help" data-error=""></textarea>
+              <p class="form-text" id="damageDetails-help">Rayones, abolladuras, fallas. Declararlos ayuda a que la tasación sea justa.</p>
+              <p class="invalid-feedback" id="damageDetails-error"></p>
+            </div>
+
+            <div class="col-12">
+              <label class="form-label" for="images">Fotos del auto</label>
+              <input class="form-control" id="images" name="images" type="file" accept="image/jpeg,image/png,image/webp,image/heic" multiple required aria-describedby="images-error images-help"><div class="preview" id="preview"></div>
+              <p class="form-text" id="images-help">De 3 a 10 fotos, hasta 10 MB cada una. Sumá frente, laterales, interior y tablero: la IA las revisa todas. La primera es la portada.</p>
+              <p class="invalid-feedback" id="images-error"></p>
+            </div>
+
+            <div class="col-12">
+              <button class="btn-ap btn-ap--primary" type="submit">Publicar mi auto</button>
+              <p class="form-status" id="status" role="status"></p>
+              <p class="form-text">La tasación tarda unos segundos. Si la IA no está disponible, no se publica nada y podés intentar de nuevo.</p>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </main>
+  <div id="footer"></div>
+</body>
+</html>

@@ -27,8 +27,7 @@ Cada publicación pasa por un análisis de inteligencia artificial que revisa la
 ┌──────────────────────▼───────────────────────────────────────┐
 │  BACKEND  (NestJS 11 + TypeScript + TypeORM 0.3)             │
 │  Prefijo global: /api                                        │
-│  Módulos: autenticacion │ usuarios │ autos │ consultas │     │
-│           ia │ salud                                         │
+│  Módulos: auth │ users │ cars │ inquiries │ ai │ health     │
 │  Hosteado en: Render (servicio web)                          │
 └───────────┬──────────────────────────┬───────────────────────┘
             │                          │
@@ -69,36 +68,36 @@ Web2New/
 ├── render.yaml                    Despliegue de API y frontend en Render
 ├── DOCUMENTACION.md
 ├── BACKEND/
-│   ├── base-de-datos/
-│   │   ├── esquema.sql            Esquema completo (crear la base desde cero)
-│   │   └── migraciones/           Cambios aplicados a la base existente
+│   ├── database/
+│   │   ├── schema.sql             Esquema completo (crear la base desde cero)
+│   │   └── migrations/            Cambios aplicados a la base existente
 │   └── src/
 │       ├── main.ts                helmet, CORS, ValidationPipe, prefijo /api
 │       ├── app.module.ts          TypeORM, límite de pedidos, módulos
-│       ├── configuracion/         Validación de variables de entorno
-│       ├── comun/                 Guardia JWT, @UsuarioActual, tipos, nombres snake_case
-│       ├── autenticacion/         Registro e inicio de sesión
-│       ├── usuarios/              Perfil propio
-│       ├── autos/                 Publicaciones, filtros, fotos, almacenamiento
-│       ├── consultas/             Preguntas y respuestas públicas
-│       ├── ia/                    Prompt, mosaico de fotos, llamada a Groq, validación
-│       └── salud/                 Estado del servicio
+│       ├── config/                Validación de variables de entorno
+│       ├── common/                Guardia JWT, @CurrentUser, tipos, validadores
+│       ├── auth/                  Registro e inicio de sesión
+│       ├── users/                 Perfil propio
+│       ├── cars/                  Publicaciones, filtros, fotos, almacenamiento
+│       ├── inquiries/             Preguntas y respuestas públicas
+│       ├── ai/                    Prompt, mosaico de fotos, llamada a Groq, validación
+│       └── health/                Estado del servicio
 └── FRONTEND/
-    ├── index.html, listado.html, detalle.html, publicar.html,
-    │   editar.html, perfil.html, login.html, registro.html
-    ├── config-entorno.js          URL de la API (se genera en el deploy)
-    ├── generar-config.mjs         Genera config-entorno.js desde API_URL
-    ├── css/estilos.css            Sistema visual (tokens, botones, tarjetas)
+    ├── index.html, listing.html, detail.html, publish.html,
+    │   edit.html, profile.html, login.html, register.html
+    ├── env-config.js              URL de la API (se genera en el deploy)
+    ├── generate-config.mjs        Genera env-config.js desde API_URL
+    ├── css/styles.css             Sistema visual (tokens, botones, tarjetas)
     ├── data/                      Marcas/modelos y provincias argentinas
     ├── vendor/bootstrap/          Bootstrap 5.3.3
     └── js/
-        ├── nucleo/                api, sesión, utilidades DOM, catálogos
-        ├── componentes/           encabezado, pie, tarjeta, comparador,
+        ├── core/                  api, sesión, utilidades DOM, catálogos
+        ├── components/            encabezado, pie, tarjeta, comparador,
         │                          panel de tasación, selector, campo de fotos
-        └── paginas/               un archivo por página
+        └── pages/                 un archivo por página
 ```
 
-**Convención de nombres:** todo el dominio está en español (carpetas, módulos, clases, funciones, rutas, columnas y archivos). En el backend se mantienen en inglés solo los sufijos técnicos que impone NestJS (`Module`, `Controller`, `Service`, `Dto`, `Guard`, `.entity`) y las palabras clave del lenguaje. Las columnas de la base van en `snake_case` y las propiedades en `camelCase`; la traducción la hace `EstrategiaNombresSnake`.
+**Convención de nombres:** todo el código está en inglés (carpetas, archivos, clases, funciones, variables, DTOs y rutas de la API). Lo que ve el usuario sigue en español: textos, mensajes de error y validación. Los comentarios están en español para explicar el porqué. La base de datos conserva sus nombres en español (`usuarios`, `autos`, `imagenes_auto`, `consultas`, columnas en `snake_case`); cada entidad mapea sus propiedades en inglés a esas columnas con `@Column({ name: '...' })`.
 
 ---
 
@@ -169,12 +168,12 @@ Restricción única `(auto_id, comprador_id)`: una consulta por comprador y por 
 | Página | Acceso | Contenido |
 |---|---|---|
 | `index.html` | Público | Portada: último auto publicado con su tasación, cómo tasa la IA, autos recientes con búsqueda rápida, preguntas frecuentes |
-| `listado.html` | Público | Filtros (marca o modelo, marca, modelo, precio con deslizador, año, kilometraje, provincia, combustible, transmisión), orden, paginación; los filtros quedan en la URL |
-| `detalle.html` | Público | Galería, características, tasación por IA, descripción, preguntas y respuestas públicas |
-| `publicar.html` | Cuenta, modo vendedor | Formulario con 3 a 10 fotos; la IA tasa al enviar |
-| `editar.html` | Dueño del auto | Precio, kilometraje, descripción, daños y fotos; la IA vuelve a tasar |
-| `perfil.html` | Cuenta | Vendedor: publicaciones, consultas recibidas (se actualizan cada minuto), datos. Comprador: favoritos, datos |
-| `login.html`, `registro.html` | Público | Ingreso y alta de cuenta con validación en el navegador |
+| `listing.html` | Público | Filtros (marca o modelo, marca, modelo, precio con deslizador, año, kilometraje, provincia, combustible, transmisión), orden, paginación; los filtros quedan en la URL |
+| `detail.html` | Público | Galería, características, tasación por IA, descripción, preguntas y respuestas públicas |
+| `publish.html` | Cuenta, modo vendedor | Formulario con 3 a 10 fotos; la IA tasa al enviar |
+| `edit.html` | Dueño del auto | Precio, kilometraje, descripción, daños y fotos; la IA vuelve a tasar |
+| `profile.html` | Cuenta | Vendedor: publicaciones, consultas recibidas (se actualizan cada minuto), datos. Comprador: favoritos, datos |
+| `login.html`, `register.html` | Público | Ingreso y alta de cuenta con validación en el navegador |
 
 El **comparador** es un panel lateral (offcanvas de Bootstrap) disponible en todas las páginas para usuarios con cuenta. Compara dos autos por precio, año, kilometraje, combustible, transmisión, ubicación, daños declarados y el resultado de la IA.
 
@@ -190,41 +189,41 @@ Todas las rutas empiezan con `/api`. 🔒 = requiere `Authorization: Bearer <tok
 
 | Método | Ruta | Descripción |
 |---|---|---|
-| POST | `/autenticacion/registro` | Crea la cuenta; devuelve `{ usuario, token }` |
-| POST | `/autenticacion/inicio-sesion` | Devuelve `{ usuario, token }` |
+| POST | `/auth/register` | Crea la cuenta; devuelve `{ user, token }` |
+| POST | `/auth/login` | Devuelve `{ user, token }` |
 
 ### Usuarios
 
 | Método | Ruta | Descripción |
 |---|---|---|
-| GET 🔒 | `/usuarios/yo` | Perfil propio |
-| PATCH 🔒 | `/usuarios/yo` | Cambia nombre y teléfono |
+| GET 🔒 | `/users/me` | Perfil propio |
+| PATCH 🔒 | `/users/me` | Cambia nombre y teléfono |
 
 ### Autos
 
 | Método | Ruta | Descripción |
 |---|---|---|
-| GET | `/autos` | Listado. Filtros: `texto`, `marca`, `modelo`, `ubicacion`, `precioMin/Max`, `anioMin/Max`, `kmMin/Max`, `combustible`, `transmision`; `orden` (`reciente`, `precio_asc`, `precio_desc`, `km_asc`); `pagina`, `limite` (máx. 50). Devuelve `{ datos, total, pagina, limite, paginas }` |
-| GET 🔒 | `/autos/mios` | Publicaciones propias |
-| GET | `/autos/:id` | Detalle; del vendedor solo `{ id, nombre }` |
-| POST 🔒 | `/autos` | Publica: `multipart/form-data` con los datos y 3 a 10 fotos en `imagenes` |
-| PATCH 🔒 | `/autos/:id` | Edita precio, kilometraje, descripción o daños; fotos nuevas opcionales (3 a 10, reemplazan a las anteriores). Vuelve a tasar |
-| DELETE 🔒 | `/autos/:id` | Borra la publicación, sus fotos y sus consultas |
+| GET | `/cars` | Listado. Filtros: `search`, `brand`, `model`, `location`, `minPrice/maxPrice`, `minYear/maxYear`, `minKm/maxKm`, `fuel`, `transmission`; `sort` (`newest`, `price_asc`, `price_desc`, `mileage_asc`); `page`, `limit` (máx. 50). Devuelve `{ data, total, page, limit, pages }` |
+| GET 🔒 | `/cars/mine` | Publicaciones propias |
+| GET | `/cars/:id` | Detalle; del vendedor solo `{ id, name }` |
+| POST 🔒 | `/cars` | Publica: `multipart/form-data` con los datos y 3 a 10 fotos en `images` |
+| PATCH 🔒 | `/cars/:id` | Edita precio, kilometraje, descripción o daños; fotos nuevas opcionales (3 a 10, reemplazan a las anteriores). Vuelve a tasar |
+| DELETE 🔒 | `/cars/:id` | Borra la publicación, sus fotos y sus consultas |
 
 ### Consultas
 
 | Método | Ruta | Descripción |
 |---|---|---|
-| POST 🔒 | `/consultas` | Pregunta sobre un auto (no el propio, una por auto) |
-| GET | `/consultas/auto/:autoId` | Preguntas y respuestas del auto; del comprador solo el nombre |
-| GET 🔒 | `/consultas/recibidas` | Consultas sobre mis publicaciones |
-| PATCH 🔒 | `/consultas/:id/respuesta` | El vendedor responde |
+| POST 🔒 | `/inquiries` | Pregunta sobre un auto (no el propio, una por auto) |
+| GET | `/inquiries/car/:carId` | Preguntas y respuestas del auto; del comprador solo el nombre |
+| GET 🔒 | `/inquiries/received` | Consultas sobre mis publicaciones |
+| PATCH 🔒 | `/inquiries/:id/answer` | El vendedor responde |
 
 ### Salud
 
 | Método | Ruta | Descripción |
 |---|---|---|
-| GET | `/salud` | `{ estado, baseDeDatos }`, usado por Render |
+| GET | `/health` | `{ status, database }`, usado por Render |
 
 **Códigos de error:** 400 datos inválidos, 401 sin sesión o credenciales incorrectas, 403 sin permiso sobre el recurso, 404 no existe, 409 email ya registrado o consulta repetida, 429 demasiados pedidos, 503 IA no disponible.
 
@@ -252,7 +251,7 @@ El modo, los favoritos y la lista del comparador se guardan en `localStorage`, s
 
 ### Proveedor y modelo
 
-- **Groq**, modelo `qwen/qwen3.8-27b` (multimodal), configurable con la variable `GROQ_MODELO`.
+- **Groq**, modelo `qwen/qwen3.8-27b` (multimodal), configurable con la variable `GROQ_MODEL`.
 - Respuesta en formato JSON forzado (`response_format: json_object`), temperatura 0.1.
 
 ### Flujo al publicar
@@ -308,7 +307,7 @@ Ajuste por kilometraje: menos de 30.000 km +8 %; 30.001–60.000 sin ajuste; 60.
 - RLS en todas las tablas; el bucket solo admite escritura con la clave secreta del servidor.
 
 **Frontend**
-- Todo texto que viene de la API o del usuario se escapa antes de insertarse como HTML (plantilla `html` en `js/nucleo/dom.js`).
+- Todo texto que viene de la API o del usuario se escapa antes de insertarse como HTML (plantilla `html` en `js/core/dom.js`).
 - Content-Security-Policy en cada página: scripts y estilos solo del propio sitio (Bootstrap servido localmente), sin estilos ni scripts en línea.
 - Cabeceras de seguridad en el hosting (`X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy`, HSTS).
 - El parámetro `volver` del ingreso solo acepta páginas propias (evita redirecciones abiertas).
@@ -320,12 +319,12 @@ Ajuste por kilometraje: menos de 30.000 km +8 %; 30.001–60.000 sin ajuste; 60.
 
 **URLs en producción:**
 - Frontend: https://autopulse-web-52h6.onrender.com
-- Backend: https://autopulse-api-52h6.onrender.com/api (estado: `/api/salud`)
+- Backend: https://autopulse-api-52h6.onrender.com/api (estado: `/api/health`)
 
 El repositorio incluye `render.yaml` (Blueprint de Render) con dos servicios conectados a la rama `develop`:
 
-- **autopulse-api** — servicio web (plan gratuito: se duerme tras 15 minutos sin uso y el primer pedido tarda ~50 s) Node 22 con `rootDir: BACKEND`, chequeo de salud en `/api/salud`.
-- **autopulse-web** — sitio estático con `rootDir: FRONTEND`; en el build, `generar-config.mjs` escribe la URL de la API.
+- **autopulse-api** — servicio web (plan gratuito: se duerme tras 15 minutos sin uso y el primer pedido tarda ~50 s) Node 22 con `rootDir: BACKEND`, chequeo de salud en `/api/health`.
+- **autopulse-web** — sitio estático con `rootDir: FRONTEND`; en el build, `generate-config.mjs` escribe la URL de la API.
 
 **Servicios externos:**
 - Base de datos: **Supabase** (PostgreSQL 17, región sa-east-1 — São Paulo).

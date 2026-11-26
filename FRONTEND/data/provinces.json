@@ -1,6 +1,6 @@
 {
-  "pais": "Argentina",
-  "provincias": [
+  "country": "Argentina",
+  "provinces": [
     "Buenos Aires",
     "Catamarca",
     "Chaco",

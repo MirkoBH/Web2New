@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="es-AR" data-bs-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob: https://*.supabase.co; connect-src 'self' http://localhost:3000 https://*.onrender.com; base-uri 'self'; form-action 'self'; object-src 'none'">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+  <title>Editar publicación: AutoPulse</title>
+  <meta name="description" content="Editá el precio, el kilometraje, la descripción o las fotos de tu auto publicado en AutoPulse.">
+  <meta name="theme-color" content="#0e0e0f">
+  <link rel="icon" href="img/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..700&family=Instrument+Sans:wght@400..600&display=swap">
+  <link rel="stylesheet" href="vendor/bootstrap/bootstrap.min.css">
+  <link rel="stylesheet" href="css/styles.css">
+  <script src="env-config.js"></script>
+  <script src="vendor/bootstrap/bootstrap.bundle.min.js" defer></script>
+  <script type="module" src="js/pages/edit.js"></script>
+</head>
+<body>
+  <div id="header"></div>
+  <main id="content" class="page">
+    <div class="wrap">
+      <div class="row">
+        <div class="col-lg-8">
+          <p class="label" id="edit-car">Cargando publicación…</p>
+          <h1 class="h2 mt-2">Editar publicación</h1>
+          <p class="lead-text muted mt-3 mb-5 measure">Al guardar, la IA vuelve a tasar el auto con los datos nuevos.</p>
+          <div id="alerts"></div>
+          <form id="form" class="row g-4" novalidate hidden>
+            <div class="col-md-6">
+              <label class="form-label" for="price">Precio (USD)</label>
+              <input class="form-control" id="price" name="price" type="number" required min="1" max="99999999" step="1" inputmode="numeric" aria-describedby="price-error" data-error="Escribí el precio en dólares, sin puntos.">
+              
+              <p class="invalid-feedback" id="price-error"></p>
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label" for="mileage">Kilometraje</label>
+              <input class="form-control" id="mileage" name="mileage" type="number" required min="0" max="2000000" step="1" inputmode="numeric" aria-describedby="mileage-error" data-error="Escribí los kilómetros, sin puntos.">
+              
+              <p class="invalid-feedback" id="mileage-error"></p>
+            </div>
+
+            <div class="col-12">
+              <label class="form-label" for="description">Descripción</label>
+              <textarea class="form-control" id="description" name="description" rows="4" required minlength="10" maxlength="3000" aria-describedby="description-error" data-error="Contá cómo está el auto en al menos 10 caracteres."></textarea>
+              
+              <p class="invalid-feedback" id="description-error"></p>
+            </div>
+
+            <div class="col-12">
+              <label class="form-label" for="damageDetails">Daños conocidos (opcional)</label>
+              <textarea class="form-control" id="damageDetails" name="damageDetails" rows="2" maxlength="1000" aria-describedby="damageDetails-error" data-error=""></textarea>
+              
+              <p class="invalid-feedback" id="damageDetails-error"></p>
+            </div>
+
+            <div class="col-12">
+              <p class="form-label">Fotos actuales</p>
+              <div class="preview" id="current-photos"></div>
+            </div>
+            <div class="col-12">
+              <label class="form-label" for="images">Fotos nuevas (opcional)</label>
+              <input class="form-control" id="images" name="images" type="file" accept="image/jpeg,image/png,image/webp,image/heic" multiple aria-describedby="images-error images-help"><div class="preview" id="preview"></div>
+              <p class="form-text" id="images-help">Si subís fotos nuevas (de 3 a 10), reemplazan a todas las actuales.</p>
+              <p class="invalid-feedback" id="images-error"></p>
+            </div>
+
+            <div class="col-12">
+              <div class="button-row">
+                <button class="btn-ap btn-ap--primary" type="submit">Guardar cambios</button>
+                <a class="btn-ap btn-ap--secondary" id="cancel" href="profile.html">Cancelar</a>
+              </div>
+              <p class="form-status" id="status" role="status"></p>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </main>
+  <div id="footer"></div>
+</body>
+</html>

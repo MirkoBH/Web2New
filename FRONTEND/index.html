@@ -13,87 +13,87 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..700&family=Instrument+Sans:wght@400..600&display=swap">
   <link rel="stylesheet" href="vendor/bootstrap/bootstrap.min.css">
-  <link rel="stylesheet" href="css/estilos.css">
-  <script src="config-entorno.js"></script>
+  <link rel="stylesheet" href="css/styles.css">
+  <script src="env-config.js"></script>
   <script src="vendor/bootstrap/bootstrap.bundle.min.js" defer></script>
-  <script type="module" src="js/paginas/inicio.js"></script>
+  <script type="module" src="js/pages/home.js"></script>
 </head>
-<body class="portada">
-  <div id="encabezado"></div>
-  <main id="contenido">
-    <section class="seccion heroe" aria-labelledby="heroe-titulo">
+<body class="home">
+  <div id="header"></div>
+  <main id="content">
+    <section class="section hero" aria-labelledby="hero-title">
       <div class="wrap">
         <div class="row g-4">
           <div class="col-lg-5">
-            <p class="heroe__dato" id="heroe-dato" data-entrada="1">Autos usados en toda Argentina, precios en dólares</p>
-            <h1 id="heroe-titulo" data-entrada="2">Autos usados con tasación por IA</h1>
-            <p class="heroe__bajada" data-entrada="3">Publicás tu auto con fotos y una IA revisa los daños, estima el estado y calcula un rango de precio de mercado. Cada aviso muestra esa tasación al comprador.</p>
-            <div class="fila-botones" data-entrada="4">
-              <a class="btn-ap btn-ap--primario" href="publicar.html">Publicar mi auto<svg class="flecha" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
-              <a class="btn-ap btn-ap--secundario" href="listado.html">Ver autos</a>
+            <p class="hero__fact" id="hero-fact" data-enter="1">Autos usados en toda Argentina, precios en dólares</p>
+            <h1 id="hero-title" data-enter="2">Autos usados con tasación por IA</h1>
+            <p class="hero__lead" data-enter="3">Publicás tu auto con fotos y una IA revisa los daños, estima el estado y calcula un rango de precio de mercado. Cada aviso muestra esa tasación al comprador.</p>
+            <div class="button-row" data-enter="4">
+              <a class="btn-ap btn-ap--primary" href="publish.html">Publicar mi auto<svg class="arrow" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+              <a class="btn-ap btn-ap--secondary" href="listing.html">Ver autos</a>
             </div>
           </div>
-          <div class="col-lg-6 offset-lg-1" data-entrada="5">
-            <div id="heroe-auto" class="heroe__auto esqueleto" aria-busy="true"></div>
+          <div class="col-lg-6 offset-lg-1" data-enter="5">
+            <div id="hero-car" class="hero__car skeleton" aria-busy="true"></div>
           </div>
         </div>
       </div>
     </section>
 
-    <section class="seccion seccion--alt" id="tasacion" aria-labelledby="tasacion-titulo">
+    <section class="section section--alt" id="appraisal" aria-labelledby="appraisal-title">
       <div class="wrap">
         <div class="row g-4">
           <div class="col-lg-5">
-            <div class="seccion__titulo">
-              <h2 id="tasacion-titulo">Qué revisa la IA en cada aviso</h2>
+            <div class="section__title">
+              <h2 id="appraisal-title">Qué revisa la IA en cada aviso</h2>
               <p class="lead-text muted mt-3 measure">La tasación se hace al publicar y no se puede saltear.</p>
             </div>
-            <ol class="filas pasos">
+            <ol class="rows steps">
               <li><div><h3>Subís de 3 a 10 fotos y los datos</h3><p>Marca, modelo, año, kilometraje, precio, ubicación y los daños que conozcas.</p></div></li>
               <li><div><h3>La IA revisa cada foto</h3><p>Busca rayones, golpes, óxido o vidrios dañados y elige un estado: excelente, buen estado, regular o requiere reparación.</p></div></li>
               <li><div><h3>El aviso sale con su rango de precio</h3><p>Si cambiás el precio, el kilometraje o las fotos, la IA vuelve a tasar.</p></div></li>
             </ol>
           </div>
-          <div class="col-lg-6 offset-lg-1" id="tasacion-ejemplo">
-            <div class="esqueleto" aria-busy="true"></div>
+          <div class="col-lg-6 offset-lg-1" id="appraisal-example">
+            <div class="skeleton" aria-busy="true"></div>
           </div>
         </div>
       </div>
     </section>
 
-    <section class="seccion" id="recientes" aria-labelledby="recientes-titulo">
+    <section class="section" id="recent" aria-labelledby="recent-title">
       <div class="wrap">
-        <div class="pagina__cabecera">
-          <h2 id="recientes-titulo">Autos publicados hace poco</h2>
-          <a class="link" href="listado.html">Ver todos los autos</a>
+        <div class="page__header">
+          <h2 id="recent-title">Autos publicados hace poco</h2>
+          <a class="link" href="listing.html">Ver todos los autos</a>
         </div>
-        <form class="row g-3 align-items-end mb-5" action="listado.html" method="get" role="search" aria-label="Búsqueda rápida">
+        <form class="row g-3 align-items-end mb-5" action="listing.html" method="get" role="search" aria-label="Búsqueda rápida">
           <div class="col-md-4">
-            <label class="form-label" for="buscar-texto">Marca o modelo</label>
-            <input class="form-control" id="buscar-texto" name="texto" type="search" maxlength="80" placeholder="Corolla, Hilux, Gol…">
+            <label class="form-label" for="search-text">Marca o modelo</label>
+            <input class="form-control" id="search-text" name="search" type="search" maxlength="80" placeholder="Corolla, Hilux, Gol…">
           </div>
           <div class="col-6 col-md-3">
-            <label class="form-label" for="buscar-precio">Precio máximo (USD)</label>
-            <input class="form-control" id="buscar-precio" name="precioMax" type="number" min="0" step="500" inputmode="numeric">
+            <label class="form-label" for="search-price">Precio máximo (USD)</label>
+            <input class="form-control" id="search-price" name="maxPrice" type="number" min="0" step="500" inputmode="numeric">
           </div>
           <div class="col-6 col-md-3">
-            <label class="form-label" for="buscar-km">Kilometraje máximo</label>
-            <input class="form-control" id="buscar-km" name="kmMax" type="number" min="0" step="5000" inputmode="numeric">
+            <label class="form-label" for="search-km">Kilometraje máximo</label>
+            <input class="form-control" id="search-km" name="maxKm" type="number" min="0" step="5000" inputmode="numeric">
           </div>
-          <div class="col-md-2"><button class="btn-ap btn-ap--secundario w-100" type="submit">Buscar autos</button></div>
+          <div class="col-md-2"><button class="btn-ap btn-ap--secondary w-100" type="submit">Buscar autos</button></div>
         </form>
-        <div class="row g-4" id="recientes-grilla">
-          <div class="col-sm-6 col-lg-3"><div class="esqueleto"></div></div>
-          <div class="col-sm-6 col-lg-3"><div class="esqueleto"></div></div>
-          <div class="col-sm-6 col-lg-3 d-none d-sm-block"><div class="esqueleto"></div></div>
-          <div class="col-sm-6 col-lg-3 d-none d-sm-block"><div class="esqueleto"></div></div>
+        <div class="row g-4" id="recent-grid">
+          <div class="col-sm-6 col-lg-3"><div class="skeleton"></div></div>
+          <div class="col-sm-6 col-lg-3"><div class="skeleton"></div></div>
+          <div class="col-sm-6 col-lg-3 d-none d-sm-block"><div class="skeleton"></div></div>
+          <div class="col-sm-6 col-lg-3 d-none d-sm-block"><div class="skeleton"></div></div>
         </div>
       </div>
     </section>
 
-    <section class="seccion seccion--alt" id="preguntas" aria-labelledby="preguntas-titulo">
+    <section class="section section--alt" id="faq" aria-labelledby="faq-title">
       <div class="wrap">
-        <h2 class="seccion__titulo" id="preguntas-titulo">Preguntas frecuentes</h2>
+        <h2 class="section__title" id="faq-title">Preguntas frecuentes</h2>
         <dl class="faq">
           <div><dt>¿Cuánto tarda la tasación?</dt><dd>Unos segundos, mientras se envía la publicación. Si la IA no responde, el aviso no se guarda y te pedimos intentar de nuevo en unos minutos.</dd></div>
           <div><dt>¿El rango de precio es una tasación oficial?</dt><dd>No. Es una estimación de la IA en dólares, con referencias del mercado argentino, el kilometraje y los daños que ve en las fotos.</dd></div>
@@ -106,14 +106,14 @@
     </section>
   </main>
 
-  <footer class="cierre">
+  <footer class="closing">
     <div class="wrap">
-      <div class="cierre__llamado">
+      <div class="closing__cta">
         <h2>Vendé tu auto con un precio de referencia</h2>
         <p class="lead-text muted measure">Publicar no tiene costo. Necesitás una cuenta y al menos tres fotos del auto.</p>
-        <a class="btn-ap btn-ap--primario" href="publicar.html">Publicar mi auto<svg class="flecha" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+        <a class="btn-ap btn-ap--primary" href="publish.html">Publicar mi auto<svg class="arrow" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
       </div>
-      <div id="directorio"></div>
+      <div id="directory"></div>
     </div>
   </footer>
 </body>
