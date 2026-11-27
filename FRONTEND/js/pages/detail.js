@@ -21,7 +21,8 @@ initPage({ current: 'cars' });
 
 const id = queryParam('id');
 const session = getSession();
-const LABELS = { Automatic: 'Automático', Hybrid: 'Híbrido', Electric: 'Eléctrico', Diesel: 'Diésel' };
+// Las claves son los valores guardados en la base; los textos, lo que se muestra.
+const LABELS = { Automatico: 'Automático', Hibrido: 'Híbrido', Electrico: 'Eléctrico', Diesel: 'Diésel' };
 const name = (value) => LABELS[value] ?? value;
 
 load();
@@ -60,7 +61,7 @@ function renderCar(container, car, inquiries) {
         <ul class="rows mt-s6">
           ${row('Año', car.year)}
           ${row('Kilometraje', formatKm(car.mileage))}
-          ${row('Fuel', name(car.fuel))}
+          ${row('Combustible', name(car.fuel))}
           ${row('Transmisión', name(car.transmission))}
           ${car.color ? row('Color', car.color) : ''}
           ${row('Ubicación', car.location)}

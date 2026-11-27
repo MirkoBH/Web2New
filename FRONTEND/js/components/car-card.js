@@ -43,7 +43,7 @@ export function carCard(car) {
         <h3 class="car-card__title">
           <a class="car-card__link" href="detail.html?id=${car.id}">${title}</a>
         </h3>
-        <p class="car-card__meta">${formatKm(car.mileage)} · ${car.transmission === 'Automatic' ? 'Automático' : 'Manual'} · ${car.location}</p>
+        <p class="car-card__meta">${formatKm(car.mileage)} · ${car.transmission === 'Automatico' ? 'Automático' : 'Manual'} · ${car.location}</p>
         <div class="car-card__footer">
           <span class="price">${formatUsd(car.price)}</span>
           ${conditionBadge(car.aiAnalysis.condition)}

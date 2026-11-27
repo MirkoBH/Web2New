@@ -87,8 +87,8 @@ async function loadComparison() {
         ${row('Precio', (a) => formatUsd(a.price))}
         ${row('Año', (a) => a.year)}
         ${row('Kilometraje', (a) => formatKm(a.mileage))}
-        ${row('Fuel', (a) => (a.fuel === 'Hybrid' ? 'Híbrido' : a.fuel === 'Electric' ? 'Eléctrico' : a.fuel))}
-        ${row('Transmisión', (a) => (a.transmission === 'Automatic' ? 'Automático' : 'Manual'))}
+        ${row('Combustible', (a) => (a.fuel === 'Hibrido' ? 'Híbrido' : a.fuel === 'Electrico' ? 'Eléctrico' : a.fuel))}
+        ${row('Transmisión', (a) => (a.transmission === 'Automatico' ? 'Automático' : 'Manual'))}
         ${row('Ubicación', (a) => a.location)}
         ${row('Daños declarados', (a) => a.damageDetails || 'Ninguno')}
         ${row('Estado según la IA', (a) => conditionBadge(a.aiAnalysis.condition))}

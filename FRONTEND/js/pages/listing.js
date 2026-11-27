@@ -124,7 +124,7 @@ function validateRanges(filters) {
       return `El año tiene que estar entre ${MIN_YEAR} y ${MAX_YEAR}.`;
     }
   }
-  const pairs = [['minYear', 'maxYear', 'año'], ['minKm', 'maxKm', 'mileage']];
+  const pairs = [['minYear', 'maxYear', 'año'], ['minKm', 'maxKm', 'kilometraje']];
   for (const [rangeStart, rangeEnd, name] of pairs) {
     if (filters[rangeStart] && filters[rangeEnd] && Number(filters[rangeStart]) > Number(filters[rangeEnd])) {
       return `En ${name}, el valor "desde" no puede ser mayor que "hasta".`;
