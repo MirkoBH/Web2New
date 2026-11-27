@@ -1,5 +1,5 @@
 // Utilidades de interfaz. Todo texto que viene del usuario o de la API pasa
-// por `escapar` antes de insertarse como HTML, para evitar inyección de código (XSS).
+// por `escapeHtml` antes de insertarse como HTML, para evitar inyección de código (XSS).
 
 const HTML_ENTITIES = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
 
@@ -53,7 +53,7 @@ export const formatKm = (value) => `${numberFormat.format(Number(value) || 0)} 
 export const formatNumber = (value) => numberFormat.format(Number(value) || 0);
 export const formatDate = (value) => dateFormat.format(new Date(value));
 
-/** Muestra un aviso de Bootstrap dentro de `contenedor`. */
+/** Muestra un aviso de Bootstrap dentro de `container`. */
 export function showNotice(container, message, type = 'danger') {
   if (!container) return;
   container.innerHTML = html`<div class="alert alert-${type}" role="${type === 'danger' ? 'alert' : 'status'}">${message}</div>`;
